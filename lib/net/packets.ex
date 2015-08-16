@@ -70,7 +70,7 @@ defmodule McEx.Net.Packets.Macros do
         end,
         fn data, struct, name -> #decode
           case Map.get(struct, unquote(conditional_field)) do
-            unquote(value) -> McEx.Net.Packets.Macros.decode_type(data, struct, unquote(type)) #read
+            unquote(value) -> McEx.Net.Packets.Macros.decode_type(data, struct, name, unquote(type)) #read
             _ -> {nil, data}
           end
         end
@@ -196,7 +196,7 @@ defmodule McEx.Net.Packets.Client do #Serverbound
   packet :play, 0x08, :player_block_placement,
     location: :position,
     face: :byte,
-    heild_item: :slot,
+    held_item: :slot,
     cursor_x: :byte,
     cursor_y: :byte,
     cursor_z: :byte
@@ -237,7 +237,7 @@ defmodule McEx.Net.Packets.Client do #Serverbound
     line_3: :chat,
     line_4: :chat
   packet :play, 0x13, :player_abilities,
-    flags: :byte,
+    flags: :byte_flags,
     flying_speed: :float,
     walking_speed: :float
   packet :play, 0x14, :tab_complete,
@@ -484,15 +484,16 @@ defmodule McEx.Net.Packets.Server do #Clientbound
       chunk_x: :int,
       chunk_z: :int,
       section_mask: :u_short]),
-    chunk_data: array(:chunk_column_count, {fn struct, :chunk_data -> #TODO: Implement decoding as well
-      blocks = Enum.to_list(Enum.map(1..(16*16*16), fn _ -> 1 end))
-      data = <<write_block_types(blocks, <<>>)::binary, write_block_light(blocks, <<>>)::binary>>
-      <<data::binary, data::binary, data::binary, data::binary>>
-    end, nil})
+    chunk_data: :data
+    #chunk_data: array(:chunk_column_count, {fn struct, :chunk_data -> #TODO: Implement decoding as well
+    #  blocks = Enum.to_list(Enum.map(1..(16*16*16), fn _ -> 1 end))
+    #  data = <<write_block_types(blocks, <<>>)::binary, write_block_light(blocks, <<>>)::binary>>
+    #  <<data::binary, data::binary, data::binary, data::binary>>
+    #end, nil})
     
 
   packet :play, 0x39, :player_abilities,
-    flags: :byte, #creative, flying, can_fly, godmode
+    flags: :byte_flags, #creative, flying, can_fly, godmode
     flying_speed: :float,
     walking_speed: :float
 

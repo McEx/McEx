@@ -172,6 +172,10 @@ defmodule McEx.DataTypes do
 
   defmodule Encode do
 
+    def byte_flags(bin) do
+      bin
+    end
+
     @spec varint(integer) :: binary
     def varint(int) do
       :gpb.encode_varint(int)

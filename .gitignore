@@ -10,3 +10,11 @@ erl_crash.dump
 Session.vim
 .netrwhist
 *~
+
+#rust
+*.o
+*.so
+*.rlib
+*.dll
+*.exe
+/rs/target/

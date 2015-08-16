@@ -17,7 +17,7 @@ defmodule McEx.Supervisor do
   def init(:ok) do
     children = [
       worker(McEx.EntityIdGenerator, [[name: @entity_id_gen_name]]),
-      supervisor(McEx.Chunk.Supervisor, []),
+      supervisor(McEx.World.Supervisor, []),
       supervisor(McEx.Player.Supervisor, []),
       supervisor(McEx.Net, [])
     ]

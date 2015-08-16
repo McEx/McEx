@@ -1,38 +1,20 @@
-defmodule McEx.Chunk.Supervisor do
-  use Supervisor
-
-  def start_link do
-    Supervisor.start_link(__MODULE__, :ok)
-  end
-
-  def init(:ok) do
-    children = [
-      supervisor(McEx.Chunk.ChunkSupervisor, []),
-      worker(McEx.Chunk.Manager, [])
-    ]
-
-    opts = [strategy: :one_for_all]
-    supervise(children, opts)
-  end
-end
-
 defmodule McEx.Chunk.Manager do
   use GenServer
   use McEx.Util
 
   def start_link do
-    GenServer.start_link(__MODULE__, :ok, [name: McEx.Chunk.Manager])
+    GenServer.start_link(__MODULE__, :ok, [])
   end
 
-  def get_chunk(chunk) do
-    GenServer.call(McEx.Chunk.Manager, {:get_chunk, chunk})
+  def get_chunk(manager, chunk) do
+    GenServer.call(manager, {:get_chunk, chunk})
   end
 
-  def lock_chunk(chunk, process) do
-    GenServer.cast(McEx.Chunk.Manager, {:lock_chunk, chunk, process})
+  def lock_chunk(manager, chunk, process) do
+    GenServer.cast(manager, {:lock_chunk, chunk, process})
   end
-  def release_chunk(chunk, process) do
-    GenServer.cast(McEx.Chunk.Manager, {:release_chunk, chunk, process})
+  def release_chunk(manager, chunk, process) do
+    GenServer.cast(manager, {:release_chunk, chunk, process})
   end
 
   defmodule ChunkData do

@@ -35,3 +35,11 @@ defmodule McEx.Mixfile do
      {:httpotion, "~> 2.1.0"}]
   end
 end
+
+defmodule Mix.Tasks.Compile.Native do
+  def run(_) do
+    if Mix.shell.cmd("cd rs; cargo build") != 0 do
+      raise Mix.Error, message: "could not build native libs. Make sure you have make and gcc installed."
+    end
+  end
+end

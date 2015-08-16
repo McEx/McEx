@@ -57,38 +57,45 @@ defmodule McEx.Player do
         look: %PlayerLook{},
         on_ground: true,
         client_settings: %ClientSettings{},
-        loaded_chunks: HashSet.new)
+        loaded_chunks: HashSet.new,
+        world_pid: nil,
+        chunk_manager_pid: nil)
   end
 
   def start_link(conn, {true, name, uuid}, opts \\ []) do
     GenServer.start_link(__MODULE__, {conn, {name, uuid}}, opts)
   end
 
-  def recv_position(server, {:pos, _, _, _} = pos) do
-    GenServer.cast(server, {:update_position, pos})
+  def client_events(_, []), do: nil
+  def client_events(server, [event | events]) do
+    client_event(server, event)
+    client_events(server, events)
   end
-  def recv_look(server, %PlayerLook{} = look) do
-    GenServer.cast(server, {:update_look, look})
-  end
-  def recv_ground(server, on_ground) do
-    GenServer.cast(server, {:on_ground, on_ground})
-  end
-  def update_client_settings(server, %ClientSettings{} = settings) do
-    GenServer.cast(server, {:update_client_settings, settings})
+
+  def client_event(server, nil), do: nil
+  def client_event(server, data) do
+    GenServer.cast(server, {:client_event, data})
   end
 
   def init({{connection, reader, writer}, {name, uuid}}) do
     Logger.info("User #{name} joined with uuid #{uuid}")
     Process.monitor(connection)
-    McEx.Chunk.Manager.lock_chunk({:chunk, 0, 0}, self)
-    {:ok, chunk} = McEx.Chunk.Manager.get_chunk({:chunk, 0, 0})
-    McEx.Chunk.send_chunk(chunk, writer)
+
+    world_pid = McEx.World.Manager.get_world(:test)
+    Process.monitor(world_pid)
+    chunk_manager_pid = McEx.World.get_chunk_manager(world_pid)
+
+    #McEx.Chunk.Manager.lock_chunk(chunk_manager_pid, {:chunk, 0, 0}, self)
+    #{:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_mananger_pid, {:chunk, 0, 0})
+    #McEx.Chunk.send_chunk(chunk, writer)
     {:ok, %PlayerState{
         connection: connection,
         reader: reader,
         writer: writer,
         name: name,
-        uuid: uuid}}
+        uuid: uuid,
+        world_pid: world_pid,
+        chunk_manager_pid: chunk_manager_pid}}
   end
 
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do
@@ -103,14 +110,14 @@ defmodule McEx.Player do
     Enum.map(Enum.sort(chunks_in_view, fn({dist1, _}, {dist2, _}) -> dist1 <= dist2 end), fn {_, {x, y}} -> {:chunk, x, y} end)
   end
 
-  def load_chunks(%PlayerState{} = state) do
+  def load_chunks(%PlayerState{chunk_manager_pid: manager} = state) do
     chunk_load_list = get_chunks_in_view(state)
     loaded_chunks = Enum.reduce(chunk_load_list, state.loaded_chunks, fn element, loaded ->
       if Set.member?(loaded, element) do
         loaded
       else
-        McEx.Chunk.Manager.lock_chunk(element, self)
-        {:ok, chunk} = McEx.Chunk.Manager.get_chunk(element)
+        McEx.Chunk.Manager.lock_chunk(manager, element, self)
+        {:ok, chunk} = McEx.Chunk.Manager.get_chunk(manager, element)
         McEx.Chunk.send_chunk(chunk, state.writer)
         Set.put(loaded, element)
       end
@@ -119,7 +126,7 @@ defmodule McEx.Player do
       if Enum.member?(chunk_load_list, element) do
         true
       else
-        McEx.Chunk.Manager.release_chunk(element, self)
+        McEx.Chunk.Manager.release_chunk(manager, element, self)
         {:chunk, x, z} = element
         Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.ChunkData{
           chunk_x: x,
@@ -138,20 +145,38 @@ defmodule McEx.Player do
     Logger.info("User #{name} left the server")
     {:stop, :normal, data}
   end
+  def handle_info({:DOWN, _ref, :process, world_pid, _reason}, %{world_pid: world_pid} = data) do
+    # o shit
+    # umm
+    # okey
+    # i guess we should handle this at some point
+    {:stop, :world_down, data}
+  end
 
-  def handle_cast({:update_position, {:pos, _, _, _} = pos}, state) do
+  def handle_cast({:client_event, {:set_pos, pos}}, state) do
     state = %{state | position: pos}
     state = load_chunks(state)
     {:noreply, state} #TODO: Verify movement
   end
-  def handle_cast({:update_look, %PlayerLook{} = look}, data) do
+  def handle_cast({:client_event, {:set_look, look}}, data) do
     {:noreply, %{data | look: look}}
   end
-  def handle_cast({:on_ground, on_ground}, data) do
+  def handle_cast({:client_event, {:set_on_ground, on_ground}}, data) do
     {:noreply, %{data | on_ground: on_ground}}
   end
-  def handle_cast({:update_client_settings, %ClientSettings{skin_parts: %ClientSettings.SkinParts{}} = settings}, data) do
-    IO.inspect settings
-    {:noreply, %{data | client_settings: settings}}
+  def handle_cast({:client_event, {:set_view_distance, distance}}, data) do
+    {:noreply, update_in(data.client_settings.view_distance, fn _ -> distance end)}
+  end
+
+  def handle_cast({:client_event, {:action_digging, state, position, face}}, data) do
+    {:noreply, data}
+  end
+
+  def handle_cast({:client_event, {:action_punch_animation}}, data) do
+    {:noreply, data}
+  end
+  def handle_cast({:client_event, event}, data) do
+    IO.inspect event
+    {:noreply, data}
   end
 end
