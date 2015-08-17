@@ -142,11 +142,6 @@ pub unsafe fn alloc_resource_raw(res_type: &NifResourceType, size: usize) -> *mu
 // End Resources
 
 // Resource Structs
-pub unsafe fn alloc_struct_resource_raw<'a, T>(_env: &'a NifEnv, res_type: &NifStructResourceType<T>) -> &'a mut T {
-    let buf: *mut c_void = alloc_resource_raw(&res_type.res, mem::size_of::<T>());
-    &mut *(buf as *mut T)
-}
-
 pub fn open_struct_resource_type<T>(env: &NifEnv, module: &str, name: &str,
                                  flags: ErlNifResourceFlags) -> Result<NifStructResourceType<T>, &'static str> {
     let res: NifResourceType = try!(open_resource_type_raw(env, module, name, flags));
@@ -156,15 +151,24 @@ pub fn open_struct_resource_type<T>(env: &NifEnv, module: &str, name: &str,
     })
 }
 pub fn alloc_struct_resource<'a, T>(env: &'a NifEnv, res_type: &NifStructResourceType<T>) -> (&'a mut T, NifTerm<'a>) {
-    let res = unsafe { alloc_struct_resource_raw::<T>(env, res_type) };
+    let res = unsafe { 
+        let buf: *mut c_void = alloc_resource_raw(&res_type.res, mem::size_of::<T>());
+        &mut *(buf as *mut T)
+    };
     let res_ptr = (res as *mut T) as *mut c_void;
     let term = NifTerm::new(env, unsafe { ruster_unsafe::enif_make_resource(env.env, res_ptr) });
     unsafe { ruster_unsafe::enif_release_resource(res_ptr) };
     (res, term)
 }
-//pub fn get_struct_resource<T>(env: &NifEnv, res_type: &NifStructResourceType<T>, term: NifTerm) -> T {
-//    ruster_unsafe::enif_get_resource(env.env, res_type.res.res, term.term, None);
-//}
+pub fn get_struct_resource<'a, T>(env: &'a NifEnv, 
+                                  res_type: &NifStructResourceType<T>, term: NifTerm)-> Result<&'a mut T, NifError> {
+    let res: &mut T = unsafe { mem::uninitialized() };
+    if unsafe { ruster_unsafe::enif_get_resource(env.env, term.term, res_type.res.res, 
+                                     &mut ((res as *mut T) as *mut c_void) as *mut *mut c_void ) } == 0 {
+        return Err(NifError::BadArg);
+    }
+    Ok(res)
+}
 // End Resource Structs
 
 pub fn get_tuple<'a>(env: &'a NifEnv, term: NifTerm) -> Result<Vec<NifTerm<'a>>, NifError> {
@@ -261,11 +265,11 @@ macro_rules! nif_atom {
     });
 }
 
-pub fn nif_atom(env: NifEnv, name: &str) -> ERL_NIF_TERM {
+pub fn nif_atom<'a>(env: &'a NifEnv, name: &str) -> NifTerm<'a> {
     unsafe { 
-        ruster_unsafe::enif_make_atom_len(
+        NifTerm::new(env, ruster_unsafe::enif_make_atom_len(
             env.env,
             name.as_ptr() as *const u8,
-            name.len() as size_t) 
+            name.len() as size_t))
     }
 }
