@@ -1,48 +1,63 @@
-#[macro_use]
-extern crate ruster_unsafe;
-use ruster_unsafe::*;
+//#![feature(trace_macros)]
+//trace_macros!(true);
 
-#[macro_use]
-pub mod nif;
+#![feature(plugin)]
+#![plugin(rustler_codegen)]
+
+//#[macro_use(nif_init, nif_init_func, nif_func, nif_func_args, decode_tuple, decode_term_array_to_tuple)]
+extern crate rustler;
+use rustler::{NifTerm, NifEnv, NifError};
+use rustler::{ NifEncoder, NifDecoder };
+use rustler::resource::ResourceTypeHolder;
+use rustler::binary::{OwnedNifBinary, NifBinary};
 
 mod chunk_data;
-use chunk_data::{ Chunk };
+use chunk_data::{ Chunk, BlockData };
 
-nif_init!(b"Elixir.McEx.Native.Chunk\0", Some(load), None, None, None,
-        nif!(b"n_create\0", 1, create));
+extern crate libc;
+use libc::{ c_int, c_void };
 
-//static mut atom_ok:ERL_NIF_TERM = 0 as ERL_NIF_TERM;
-//static mut res_type: *mut nif::ErlNifResourceType = 0 as *mut _;
-//static mut t_res: nif::NifStructResourceType<Chunk> = unsafe { mem::uninitialized() };
-static mut chunk_resource_type: Option<nif::NifStructResourceType<Chunk>> = None;
+rustler_export_nifs!("Elixir.McEx.Native.Chunk", 
+                     [("n_create", 0, create),
+                      ("n_assemble_packet", 2, assemble_packet)],
+                     Some(on_load));
 
-extern "C" fn load(env: *mut ErlNifEnv, 
-                   _priv_data: *mut *mut c_void, 
-                   _load_info: ERL_NIF_TERM) -> c_int {
-    let n_env = nif::NifEnv { env: env };
-    unsafe {
-        chunk_resource_type = Some(
-            nif::open_struct_resource_type::<Chunk>(&n_env, "", "Chunk",
-                                                    nif::ErlNifResourceFlags::ERL_NIF_RT_CREATE).unwrap());
-        //atom_ok = enif_make_atom(env, b"ok\0" as *const u8);
-    }
-    0
+fn on_load(env: &NifEnv, load_info: NifTerm) -> bool {
+    resource_struct_init!(Chunk, env);
+    true
 }
 
-nif_func!(create, |env, args| {
-    //let data: &mut Chunk = nif::alloc_resource::<Chunk>(unsafe { &mut *res_type });
-    
-    let (t1, t2) = try!(decode_tuple!(env, args[0], (i64, i64)));
-    println!("t1: {}, t2: {}", t1, t2);
-    
-    let chunk_res_type = unsafe { &chunk_resource_type }.as_ref().unwrap();
+fn create<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
+    let holder = ResourceTypeHolder::new(env, Chunk::default());
+    holder.write().unwrap().set_block(0, 100, 0, BlockData::new(1, 0));
+    Ok(holder.encode(env))
+}
 
-    let (res, term) = nif::alloc_struct_resource::<Chunk>(env, chunk_res_type);
-    Ok(term)
-});
+#[NifTuple] struct PacketAssemblyParams { skylight: bool, entire_chunk: bool, bitmask: u32 }
+#[NifTuple] struct PacketAssemblyResponse<'a> { written_bitmask: u32, size: u32, chunk_data: NifTerm<'a> }
+fn assemble_packet<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
+    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0], env));
+    let params: PacketAssemblyParams = try!(NifDecoder::decode(args[1], env));
 
-nif_func!(assemble_packet, |env, args| {
-    let chunk_res_type = unsafe { &chunk_resource_type }.as_ref().unwrap();
-    let chunk: &mut Chunk = try!(nif::get_struct_resource(env, chunk_res_type, args[0]));
-    Ok(nif::nif_atom(env, "ok"))
-});
+    let mut_chunk = holder.write().unwrap();
+    let transmit_size = mut_chunk.get_transmit_size(params.skylight, params.entire_chunk, params.bitmask as u16);
+
+    let mut binary = OwnedNifBinary::alloc(transmit_size).unwrap();
+    let (written_bitmask, size) = mut_chunk.write_transmit_data(params.skylight, params.entire_chunk, 
+                                                             params.bitmask as u16, binary.as_mut_slice());
+
+    let binary_fin = binary.release(env);
+
+    Ok(PacketAssemblyResponse { written_bitmask: written_bitmask as u32, size: size, chunk_data: binary_fin.get_term(env) }.encode(env))
+}
+
+/*#[NifTuple] struct BlockPos { x: u32, y: u32, z: u32 }
+fn set_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
+    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0], env));
+    let pos: BlockPos = try!(NifDecoder::decode(args[1], env));
+    let val: u32 = try!(NifDecoder::decode(args[2], env));
+
+    holder.write().unwrap().set_block(pos.x, pos.y, pos.y, BlockData::new_raw(val as u16));
+
+
+}*/

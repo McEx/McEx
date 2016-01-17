@@ -126,10 +126,12 @@ defmodule McEx.Chunk do
   end
 
   def init({pos}) do
-    sc = Enum.reduce(1..256, <<>>, fn _, acc -> <<acc::binary, 17::little-2*8>> end)
+    #sc = Enum.reduce(1..256, <<>>, fn _, acc -> <<acc::binary, 17::little-2*8>> end)
+    #:array.set(0, sc, :array.new(256, fixed: true, default: nil))
     {:ok, %{
+        chunk_resource: McEx.Native.Chunk.create,
         pos: pos,
-        block_data: :array.set(0, sc, :array.new(256, fixed: true, default: nil))}}
+        block_data: :array.new(256, fixed: true, default: nil)}}
   end
 
   def write_empty_row(bin) do
@@ -181,14 +183,17 @@ defmodule McEx.Chunk do
 
   def write_chunk_packet(state) do
     alias McEx.DataTypes.Encode
-    kit = assemble_data(state)
-    {:chunk, x, z} = kit.pos
+
+    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource, {false, true, 0})
+
+    #kit = assemble_data(state)
+    {:chunk, x, z} = state.pos
     %McEx.Net.Packets.Server.Play.ChunkData{
       chunk_x: x, 
       chunk_z: z, 
-      continuous: kit.continuous, 
-      section_mask: kit.bitmask, 
-      chunk_data: Encode.varint(byte_size(kit.chunk_data)) <> kit.chunk_data}
+      continuous: true, 
+      section_mask: written_mask, 
+      chunk_data: Encode.varint(size) <> data}
   end
 
   def handle_cast({:send_chunk, writer}, state) do

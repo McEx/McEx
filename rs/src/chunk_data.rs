@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+
 extern crate byteorder;
+#[allow(unused_imports)]
 use self::byteorder::{LittleEndian, WriteBytesExt};
 
 const CHUNK_SECTION_HEIGHT: usize = 16;
@@ -15,6 +17,7 @@ struct ChunkSection {
     count: u16,
 }
 
+#[NifResource]
 pub struct Chunk {
     sections: [ChunkSection; CHUNK_SECTION_HEIGHT],
     biome: [u8; BIOME_BUF_LEN], // 1 byte per block column
@@ -25,9 +28,14 @@ pub struct BlockData {
     value: u16,
 }
 impl BlockData {
-    fn new(id: u16, meta: u8) -> BlockData {
+    pub fn new(id: u16, meta: u8) -> BlockData {
         BlockData {
             value: (id << 4) | (meta as u16 & 15),
+        }
+    }
+    fn new_raw(value: u16) -> BlockData {
+        BlockData {
+            value: value
         }
     }
     fn get_value(&self) -> &u16 {
@@ -131,6 +139,9 @@ impl Chunk {
     pub fn get_block(&self, x: u16, y: u16, z: u16) -> &BlockData {
         self.sections[Chunk::section_array_index(y)].get_block(x, y, z)
     }
+    pub fn set_block(&mut self, x: u16, y: u16, z: u16, block: BlockData) {
+        self.sections[Chunk::section_array_index(y)].set_block(x, y, z, block);
+    }
 
     fn count_bytes(entire_chunk: bool, num_sections: u8, skylight: bool) -> u32 {
         let mut byte_size: u32 = 0;
@@ -144,8 +155,27 @@ impl Chunk {
         byte_size
     }
 
-    pub fn get_transmit_data(&self, skylight: bool, entire_chunk: bool, bitmask: u16, 
-                             get_buffer_fun: &Fn(u32) -> Vec<u8>) -> (u16, Vec<u8>, u32) {
+    pub fn get_transmit_size(&self, skylight: bool, entire_chunk: bool, bitmask: u16) -> usize {
+        let mut section_bitmask: u16;
+        if entire_chunk {
+            section_bitmask = MAX_BITMASK;
+        } else {
+            section_bitmask = bitmask & MAX_BITMASK;
+        }
+
+        for section_num in 0..CHUNK_SECTION_HEIGHT {
+            let section = &self.sections[section_num];
+            if section.is_empty() {
+                section_bitmask = section_bitmask & !(1 << section_num);
+            }
+
+        }
+        let num_sections = count_bits(section_bitmask);
+        Chunk::count_bytes(entire_chunk, num_sections, skylight) as usize
+    }
+
+    pub fn write_transmit_data(&self, skylight: bool, entire_chunk: bool, bitmask: u16, 
+                               mut buffer: &mut [u8]) -> (u16, u32) {
         let mut section_bitmask: u16;
         if entire_chunk {
             section_bitmask = MAX_BITMASK;
@@ -166,8 +196,6 @@ impl Chunk {
         }
         let num_sections = count_bits(section_bitmask);
         let byte_size = Chunk::count_bytes(entire_chunk, num_sections, skylight);
-
-        let mut buffer: Vec<u8> = get_buffer_fun(byte_size);
 
         // Block types
         for section in &added_sections { 
@@ -196,6 +224,15 @@ impl Chunk {
             }
         }
         
-        (section_bitmask, buffer, byte_size)
+        (section_bitmask, byte_size)
+    }
+}
+
+impl Default for Chunk {
+    fn default() -> Chunk {
+        Chunk {
+            sections: [ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ],
+            biome: [0; BIOME_BUF_LEN],
+        }
     }
 }
