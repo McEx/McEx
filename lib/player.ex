@@ -108,7 +108,7 @@ defmodule McEx.Player do
     :gproc.reg({:p, :l, :server_player})
     :gproc.send({:p, :l, {:world_player, world_id}}, get_player_list_info_message(state))
     :gproc.send({:p, :l, {:world_player, world_id}}, {:send_player_list_info, self()})
-    McEx.World.player_join(world_id)
+    McEx.World.PlayerTracker.player_join(world_id)
 
     Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
       action: 0,

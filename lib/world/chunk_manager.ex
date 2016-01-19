@@ -22,10 +22,10 @@ defmodule McEx.Chunk.Manager do
     defstruct pid: nil, locks: HashSet.new
   end
 
-  def init({world_name}) do
-    :gproc.reg({:n, :l, {:world_chunk_manager, world_name}})
+  def init(world_id) do
+    :gproc.reg({:n, :l, {:world_chunk_manager, world_id}})
     {:ok, %{
-        world_name: world_name,
+        world_id: world_id,
         chunks: %{}, #{x, y}: PID
       }}
   end
