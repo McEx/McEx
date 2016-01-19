@@ -491,7 +491,41 @@ defmodule McEx.Net.Packets.Server do #Clientbound
     #  <<data::binary, data::binary, data::binary, data::binary>>
     #end, nil})
     
-
+  packet :play, 0x38, :player_list_item,
+    action: :varint,
+    element_num: :varint,
+    players_add: exists_if(:action, 0, array(:element_num, [
+      uuid: :uuid,
+      name: :string,
+      property_num: :varint,
+      properties: array(:property_num, [
+        name: :string,
+        value: :string,
+        has_signature: :bool,
+        signature: exists_if(:has_signature, true, :string),
+      ]),
+      gamemode: :varint,
+      ping: :varint,
+      has_display_name: :bool,
+      display_name: exists_if(:has_display_name, true, :string)
+    ])),
+    players_update_gamemode: exists_if(:action, 1, array(:element_num, [
+      uuid: :uuid,
+      gamemode: :varint
+    ])),
+    players_update_ping: exists_if(:action, 2, array(:element_num, [
+      uuid: :uuid,
+      ping: :varint
+    ])),
+    players_update_display_name: exists_if(:action, 3, [
+      uuid: :uuid,
+      has_display_name: :bool,
+      display_name: exists_if(:has_display_name, true, :string)
+    ]),
+    players_remove: exists_if(:action, 4, array(:element_num, [
+      uuid: :uuid
+    ]))
+    
   packet :play, 0x39, :player_abilities,
     flags: :byte_flags, #creative, flying, can_fly, godmode
     flying_speed: :float,

@@ -69,19 +69,37 @@ defmodule McEx.World.Manager do
 end
 
 defmodule McEx.World do
-  use GenServer
+  # Client
 
   def start_link(name) do
-    GenServer.start_link(__MODULE__, [name])
+    GenServer.start_link(__MODULE__, {name})
   end
 
   def get_chunk_manager(world) do
     GenServer.call(world, :get_chunk_manager)
   end
 
-  def init(name) do
-    {:ok, pid} = McEx.Chunk.Manager.start_link
-    {:ok, %{chunk_manager: pid}}
+  def player_join(world_id) do
+    true = Enum.member?(:gproc.lookup_pids({:p, :l, :server_player}), self())
+    false = Enum.member?(:gproc.lookup_pids({:p, :l, {:world_player, world_id}}), self())
+    # TODO: verify world excistence
+    :gproc.reg({:p, :l, {:world_player, world_id}})
+  end
+
+  def player_leave(world_id) do
+    :gproc.unreg({:p, :l, {:world_player, world_id}})
+  end
+
+  # Server
+  use GenServer
+
+  def init({name}) do
+    {:ok, pid} = McEx.Chunk.Manager.start_link({name})
+    :gproc.reg({:n, :l, {:world, name}})
+    {:ok, %{
+        players: [],
+        chunk_manager: pid, 
+        name: name}}
   end
 
   def handle_call(:get_chunk_manager, _from, state) do

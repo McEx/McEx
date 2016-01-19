@@ -236,6 +236,10 @@ defmodule McEx.DataTypes do
     def data(data) do
       data
     end
+
+    def uuid(num) do
+      <<num::signed-integer-16*8>>
+    end
   end
 
 end

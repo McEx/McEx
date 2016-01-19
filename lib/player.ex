@@ -58,8 +58,13 @@ defmodule McEx.Player do
         on_ground: true,
         client_settings: %ClientSettings{},
         loaded_chunks: HashSet.new,
+        world_id: nil,
         world_pid: nil,
-        chunk_manager_pid: nil)
+        chunk_manager_pid: nil,
+        tracked_players: [])
+  end
+  defmodule PlayerListInfo do 
+    defstruct(name: nil, uuid: nil)
   end
 
   def start_link(conn, {true, name, uuid}, opts \\ []) do
@@ -77,25 +82,53 @@ defmodule McEx.Player do
     GenServer.cast(server, {:client_event, data})
   end
 
+  def get_player_list_info_message(state) do
+    %PlayerListInfo{name: state.name, uuid: state.uuid}
+  end
+
   def init({{connection, reader, writer}, {name, uuid}}) do
     Logger.info("User #{name} joined with uuid #{uuid}")
     Process.monitor(connection)
 
-    world_pid = McEx.World.Manager.get_world(:test)
+    world_id = :test
+    world_pid = McEx.World.Manager.get_world(world_id)
     Process.monitor(world_pid)
     chunk_manager_pid = McEx.World.get_chunk_manager(world_pid)
+
+    state = %PlayerState{
+      connection: connection,
+      reader: reader,
+      writer: writer,
+      name: name,
+      uuid: uuid,
+      world_id: world_id,
+      world_pid: world_pid,
+      chunk_manager_pid: chunk_manager_pid}
+
+    :gproc.reg({:p, :l, :server_player})
+    :gproc.send({:p, :l, {:world_player, world_id}}, get_player_list_info_message(state))
+    :gproc.send({:p, :l, {:world_player, world_id}}, {:send_player_list_info, self()})
+    McEx.World.player_join(world_id)
+
+    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
+      action: 0,
+      element_num: 1,
+      players_add: [%{
+          uuid: 0,
+          name: "test",
+          property_num: 0,
+          properties: [],
+          gamemode: 0,
+          ping: 0,
+          has_display_name: false,
+          display_name: nil
+        }]
+    })
 
     #McEx.Chunk.Manager.lock_chunk(chunk_manager_pid, {:chunk, 0, 0}, self)
     #{:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_mananger_pid, {:chunk, 0, 0})
     #McEx.Chunk.send_chunk(chunk, writer)
-    {:ok, %PlayerState{
-        connection: connection,
-        reader: reader,
-        writer: writer,
-        name: name,
-        uuid: uuid,
-        world_pid: world_pid,
-        chunk_manager_pid: chunk_manager_pid}}
+    {:ok, state}
   end
 
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do
@@ -156,6 +189,7 @@ defmodule McEx.Player do
   def handle_cast({:client_event, {:set_pos, pos}}, state) do
     state = %{state | position: pos}
     state = load_chunks(state)
+    :gproc.send({:world_member, state.world_id}, {:server_event, {:set_pos, state.name, pos}})
     {:noreply, state} #TODO: Verify movement
   end
   def handle_cast({:client_event, {:set_look, look}}, data) do
@@ -178,5 +212,21 @@ defmodule McEx.Player do
   def handle_cast({:client_event, event}, data) do
     IO.inspect event
     {:noreply, data}
+  end
+
+  def handle_info({:server_event, {:set_pos, player_name, pos}}, state) do
+    {:noreply, state}
+  end
+
+  def handle_info({:send_player_list_info, dest}, state) do
+    send(dest, get_player_list_info_message(state))
+    {:noreply, state}
+  end
+
+  @doc """
+  This is sent by other player controllers when they have an update for the player list.
+  """
+  def handle_info(%PlayerListInfo{}, state) do
+    {:noreply, state}
   end
 end

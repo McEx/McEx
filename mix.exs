@@ -14,7 +14,7 @@ defmodule McEx.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :cutkey, :httpotion],
+    [applications: [:logger, :cutkey, :httpotion, :gproc],
      mod: {McEx, []}]
   end
 
@@ -32,7 +32,8 @@ defmodule McEx.Mixfile do
      {:poison, "~> 1.4.0"},
      {:cutkey, github: "imtal/cutkey"},
      {:ibrowse, github: "cmullaparthi/ibrowse"},
-     {:httpotion, "~> 2.1.0"}]
+     {:httpotion, "~> 2.1.0"},
+     {:gproc, "~> 0.5.0"}]
   end
 end
 

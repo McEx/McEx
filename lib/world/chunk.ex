@@ -1,90 +1,3 @@
-defmodule McEx.Chunk.Manager do
-  use GenServer
-  use McEx.Util
-
-  def start_link do
-    GenServer.start_link(__MODULE__, :ok, [])
-  end
-
-  def get_chunk(manager, chunk) do
-    GenServer.call(manager, {:get_chunk, chunk})
-  end
-
-  def lock_chunk(manager, chunk, process) do
-    GenServer.cast(manager, {:lock_chunk, chunk, process})
-  end
-  def release_chunk(manager, chunk, process) do
-    GenServer.cast(manager, {:release_chunk, chunk, process})
-  end
-
-  defmodule ChunkData do
-    defstruct pid: nil, locks: HashSet.new
-  end
-
-  def init(:ok) do
-    {:ok, %{
-        chunks: %{}, #{x, y}: PID
-      }}
-  end
-
-  def start_chunk(state, chunk) when ChunkPos.is_chunk(chunk) do
-    {:ok, pid} = McEx.Chunk.ChunkSupervisor.start_chunk(chunk)
-    put_in(state.chunks[chunk], %ChunkData{pid: pid})
-  end
-  def stop_chunk(state, chunk) when ChunkPos.is_chunk(chunk) do
-    McEx.Chunk.stop_chunk(state.chunks[chunk].pid)
-    update_in(state.chunks, &Map.delete(&1, chunk))
-  end
-
-  def ensure_chunk_started(state, chunk) when ChunkPos.is_chunk(chunk) do
-    case Map.get(state.chunks, chunk) do
-      nil -> start_chunk(state, chunk)
-      _ -> state
-    end
-  end
-
-  def stop_chunk_if_released(state, chunk) when ChunkPos.is_chunk(chunk) do
-    case Map.get(state.chunks, chunk) do
-      nil -> state
-      chunk_data -> case Set.size(chunk_data.locks) do
-        0 -> stop_chunk(state, chunk)
-        _ -> state
-      end
-    end
-  end
-
-  def handle_info({:DOWN, _ref, :process, process, _reason}, state) do
-    #TODO: Release all
-    {:noreply, state}
-  end
-
-  def handle_cast({:lock_chunk, chunk, process}, state) do
-    Process.monitor(process) #TODO: Remove monitors
-    state = ensure_chunk_started(state, chunk)
-    state = update_in(state.chunks[chunk].locks, &Set.put(&1, process))
-    {:noreply, state}
-  end
-  def handle_cast({:release_chunk, chunk, process}, state) do
-    state = update_in(state.chunks[chunk].locks, &Set.delete(&1, process))
-    state = stop_chunk_if_released(state, chunk)
-    {:noreply, state}
-  end
-  def handle_cast({:release_all_chunks, process}, state) do
-    #TODO
-    #new_chunks = Enum.map(state.chunks, fn {key, data} ->
-    #  data = get_and_update_in(data.locks, &{&1, Set.delete(&1, process)})
-    #end
-    {:noreply, state}
-  end
-  
-  def handle_call({:get_chunk, chunk}, _from, data) do
-    response = case Map.fetch(data.chunks, chunk) do
-      {:ok, chunk_data} -> {:ok, chunk_data.pid}
-      err -> err
-    end
-    {:reply, response, data}
-  end
-end
 
 defmodule McEx.Chunk.ChunkSupervisor do
   use Supervisor
@@ -126,12 +39,12 @@ defmodule McEx.Chunk do
   end
 
   def init({pos}) do
-    #sc = Enum.reduce(1..256, <<>>, fn _, acc -> <<acc::binary, 17::little-2*8>> end)
-    #:array.set(0, sc, :array.new(256, fixed: true, default: nil))
+    chunk = McEx.Native.Chunk.create
+    {:chunk, x, z} = pos
+    McEx.Native.Chunk.generate_chunk(chunk, {x, z})
     {:ok, %{
-        chunk_resource: McEx.Native.Chunk.create,
-        pos: pos,
-        block_data: :array.new(256, fixed: true, default: nil)}}
+        chunk_resource: chunk,
+        pos: pos}}
   end
 
   def write_empty_row(bin) do
@@ -141,52 +54,11 @@ defmodule McEx.Chunk do
     <<bin::binary, row::binary>>
   end
 
-  def assemble_data(state) do
-    filled_rows = :array.foldl(fn _, value, acc ->
-      case value do
-        nil -> acc ++ [false]
-        data -> acc ++ [true]
-      end
-    end, [], state.block_data)
-    filled_chunks = Enum.map(Enum.chunk(filled_rows, 16, 16), fn chunk -> Enum.reduce(chunk, fn a, b -> a or b end) end)
-    <<bitmask::2*8>> = Enum.reduce(filled_chunks, <<>>, fn bit, acc -> 
-      bit_n = if bit, do: 1, else: 0
-      <<bit_n::1, acc::bitstring>> 
-    end)
-
-    block_data = :array.foldl(fn num, value, acc ->
-      if Enum.fetch!(filled_chunks, num >>> 4) do
-        case value do
-          nil -> 
-            write_empty_row(acc)
-          row -> 
-            write_row_data(acc, row)
-        end
-      else
-        acc
-      end
-    end, <<>>, state.block_data)
-
-    light_size = trunc(byte_size(block_data) / 4)
-
-    chunk_data = <<
-      block_data::binary, 
-      0::size(light_size)-unit(8), 
-      0::size(light_size)-unit(8), 
-      0::size(256)-unit(8)>>
-
-    %{pos: state.pos,
-      bitmask: bitmask,
-      continuous: true,
-      chunk_data: chunk_data}
-  end
-
   def write_chunk_packet(state) do
     alias McEx.DataTypes.Encode
 
-    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource, {false, true, 0})
+    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource, {true, true, 0})
 
-    #kit = assemble_data(state)
     {:chunk, x, z} = state.pos
     %McEx.Net.Packets.Server.Play.ChunkData{
       chunk_x: x, 
