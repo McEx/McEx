@@ -82,12 +82,17 @@ defmodule McEx.Player do
     GenServer.cast(server, {:client_event, data})
   end
 
-  def get_player_list_info_message(state) do
-    %PlayerListInfo{name: state.name, uuid: state.uuid}
+  def make_player_list_record(state) do
+    %McEx.World.PlayerTracker.PlayerListRecord {
+      uuid: state.uuid,
+      name: state.name,
+      gamemode: 0,
+      ping: 0
+    }
   end
 
   def init({{connection, reader, writer}, {name, uuid}}) do
-    Logger.info("User #{name} joined with uuid #{uuid}")
+    Logger.info("User #{name} joined with uuid #{McEx.UUID.hex uuid}")
     Process.monitor(connection)
 
     world_id = :test
@@ -106,24 +111,8 @@ defmodule McEx.Player do
       chunk_manager_pid: chunk_manager_pid}
 
     :gproc.reg({:p, :l, :server_player})
-    :gproc.send({:p, :l, {:world_player, world_id}}, get_player_list_info_message(state))
-    :gproc.send({:p, :l, {:world_player, world_id}}, {:send_player_list_info, self()})
-    McEx.World.PlayerTracker.player_join(world_id)
+    McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
-    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
-      action: 0,
-      element_num: 1,
-      players_add: [%{
-          uuid: 0,
-          name: "test",
-          property_num: 0,
-          properties: [],
-          gamemode: 0,
-          ping: 0,
-          has_display_name: false,
-          display_name: nil
-        }]
-    })
 
     #McEx.Chunk.Manager.lock_chunk(chunk_manager_pid, {:chunk, 0, 0}, self)
     #{:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_mananger_pid, {:chunk, 0, 0})
@@ -209,24 +198,55 @@ defmodule McEx.Player do
   def handle_cast({:client_event, {:action_punch_animation}}, data) do
     {:noreply, data}
   end
-  def handle_cast({:client_event, event}, data) do
-    IO.inspect event
-    {:noreply, data}
-  end
 
   def handle_info({:server_event, {:set_pos, player_name, pos}}, state) do
     {:noreply, state}
   end
 
-  def handle_info({:send_player_list_info, dest}, state) do
-    send(dest, get_player_list_info_message(state))
+  def handle_info({:server_event, {:action_chat, message}}, state) do
     {:noreply, state}
   end
 
-  @doc """
-  This is sent by other player controllers when they have an update for the player list.
-  """
-  def handle_info(%PlayerListInfo{}, state) do
+  def handle_cast({:client_event, event}, data) do
+    IO.inspect event
+    {:noreply, data}
+  end
+
+  def handle_info({:player_list, :join, players}, state) do
+    players_add = for player <- players do
+      %{
+        uuid: player.uuid,
+        name: player.name,
+        property_num: 0,
+        properties: [],
+        gamemode: player.gamemode,
+        ping: player.ping,
+        has_display_name: false,
+        display_name: nil
+      }
+    end
+
+    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
+      action: 0,
+      element_num: Enum.count(players_add),
+      players_add: players_add
+    })
+
+    {:noreply, state}
+  end
+  def handle_info({:player_list, :leave, players}, state) do
+    player_leave = for player <- players do
+      %{
+        uuid: player.uuid
+      }
+    end
+
+    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
+      action: 4,
+      element_num: Enum.count(player_leave),
+      players_remove: player_leave
+    })
+
     {:noreply, state}
   end
 end

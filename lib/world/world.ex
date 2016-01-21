@@ -99,6 +99,11 @@ defmodule McEx.World do
 end
 
 defmodule McEx.World.PlayerTracker do
+
+  defmodule PlayerListRecord do
+    defstruct player_pid: nil, mon_ref: nil, uuid: nil, name: nil, gamemode: 0, ping: 0, display_name: nil
+  end
+
   # Client
   def start_link(world_id) do
     GenServer.start_link(__MODULE__, world_id)
@@ -108,17 +113,14 @@ defmodule McEx.World.PlayerTracker do
     :gproc.lookup_pid({:n, :l, {:world, world_id, :player_tracker}})
   end
 
-  def player_join(world_id) do
-    true = Enum.member?(:gproc.lookup_pids({:p, :l, :server_player}), self())
-    false = Enum.member?(:gproc.lookup_pids({:p, :l, {:world, world_id, :players}}), self())
-    # TODO: verify world excistence
+  def player_join(world_id, %PlayerListRecord{} = record) do
+    GenServer.call(for_world(world_id), {:player_join, %{record | player_pid: self}})
     :gproc.reg({:p, :l, {:world, world_id, :players}})
-    GenServer.call(for_world(world_id), {:player_join, self()})
   end
 
   def player_leave(world_id) do
     :gproc.unreg({:p, :l, {:world, world_id, :players}})
-    GenServer.call(for_world(world_id), {:player_leave, self()})
+    GenServer.call(for_world(world_id), {:player_leave, self})
   end
 
   # Server
@@ -132,14 +134,33 @@ defmodule McEx.World.PlayerTracker do
       }}
   end
   
-  def handle_call({:player_join, player_pid}, _from, state) do
-    mon_ref = :erlang.monitor(:process, player_pid)
-    state = Map.update_in state.players, &([{player_pid, mon_ref} | &1])
-    {:reply, nil, state}
+  def handle_call({:player_join, %PlayerListRecord{} = record}, _from, state) do
+    state = handle_join(record, state)
+    {:reply, state.players, state}
   end
   def handle_call({:player_leave, player_pid}, _from, state) do
-    {_, mon_ref} = Enum.find(state.players, fn({pid, _}) -> pid == player_pid end)
-    :erlang.unmonitor(mon_ref)
+    state = handle_leave(player_pid, state)
     {:reply, nil, state}
+  end
+
+  def handle_info({:DOWN, mon_ref, type, object, info}, state) do
+    player_pid = Enum.find(state.players, fn(rec) -> rec.mon_ref == mon_ref end).player_pid
+    state = handle_leave(player_pid, state)
+    {:noreply, state}
+  end
+
+  def handle_join(%PlayerListRecord{} = record, state) do
+    mon_ref = :erlang.monitor(:process, record.player_pid)
+    record = %{record | mon_ref: mon_ref}
+    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:player_list, :join, [record]})
+    state = update_in state.players, &([record | &1])
+    send(record.player_pid, {:player_list, :join, state.players})
+    state
+  end
+  def handle_leave(pid, state) do
+    record = Enum.find(state.players, fn(rec) -> rec.player_pid == pid end)
+    :erlang.demonitor(record.mon_ref)
+    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:player_list, :leave, [record]})
+    update_in state.players, &(Enum.filter(&1, fn(rec) -> rec != record end))
   end
 end

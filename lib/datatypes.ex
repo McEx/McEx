@@ -237,8 +237,12 @@ defmodule McEx.DataTypes do
       data
     end
 
-    def uuid(num) do
-      <<num::signed-integer-16*8>>
+    def uuid_string(%McEx.UUID{} = dat) do
+      string(McEx.UUID.hex_hyphen(dat))
+    end
+    def uuid(%McEx.UUID{} = dat) do
+      #<<num::signed-integer-16*8>>
+      McEx.UUID.bin dat
     end
   end
 

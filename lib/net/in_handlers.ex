@@ -37,11 +37,12 @@ defmodule McEx.Net.Handlers do
 
     verification_response = Crypto.verify_user_login(pub_key, shared_secret, name)
     ^name = verification_response.name
-    state = %{state | user: {true, name, verification_response.id}}
+    uuid = McEx.UUID.from_hex(verification_response.id)
+    state = %{state | user: {true, name, uuid}}
 
     state = state |> write_packet(%Server.Login.LoginSuccess{
       username: name, 
-      uuid: McEx.UUID.hyphenize_string(verification_response.id)})
+      uuid: uuid})
 
     state = State.set_mode(state, :play)
     state = %{state | entity_id: McEx.EntityIdGenerator.get_id}

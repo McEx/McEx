@@ -276,7 +276,7 @@ defmodule McEx.Net.Packets.Server do #Clientbound
     public_key: :varint_length_binary,
     verify_token: :varint_length_binary
   packet :login, 0x02, :login_success,
-    uuid: :string,
+    uuid: :uuid_string,
     username: :string
   packet :login, 0x03, :set_compression,
     threshold: :varint
