@@ -142,6 +142,10 @@ defmodule McEx.DataTypes do
       {num, data}
     end
 
+    def fixed_point_int(data) do
+      int(data / 32)
+    end
+
     def float(data) do
       <<num::signed-float-4*8, data::binary>> = data
       {num, data}
@@ -222,6 +226,10 @@ defmodule McEx.DataTypes do
       <<num::signed-integer-size(64)>>
     end
 
+    def fixed_point_int(num) do
+      int(num * 32)
+    end
+
     def float(num) do
       <<num::signed-float-4*8>>
     end
@@ -243,6 +251,13 @@ defmodule McEx.DataTypes do
     def uuid(%McEx.UUID{} = dat) do
       #<<num::signed-integer-16*8>>
       McEx.UUID.bin dat
+    end
+
+    def angle(num) do
+      byte(num)
+    end
+    def metadata(meta) do
+      McEx.EntityMeta.write(meta)
     end
   end
 

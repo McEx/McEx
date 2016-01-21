@@ -48,6 +48,7 @@ defmodule McEx.Player do
 
   defmodule PlayerState do
     defstruct(
+        eid: nil,
         name: nil,
         uuid: nil,
         connection: nil,
@@ -84,10 +85,11 @@ defmodule McEx.Player do
 
   def make_player_list_record(state) do
     %McEx.World.PlayerTracker.PlayerListRecord {
+      eid: state.eid,
       uuid: state.uuid,
       name: state.name,
       gamemode: 0,
-      ping: 0
+      ping: 0,
     }
   end
 
@@ -104,6 +106,7 @@ defmodule McEx.Player do
       connection: connection,
       reader: reader,
       writer: writer,
+      eid: GenServer.call(McEx.EntityIdGenerator, :gen_id),
       name: name,
       uuid: uuid,
       world_id: world_id,
@@ -231,6 +234,18 @@ defmodule McEx.Player do
       element_num: Enum.count(players_add),
       players_add: players_add
     })
+    for player <- players do
+      if player.player_pid != self do
+        Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.SpawnPlayer{
+          entity_id: player.eid,
+          player_uuid: player.uuid,
+          x: 0, y: 90, z: 0,
+          yaw: 0, pitch: 0,
+          current_item: 0,
+          metadata: [],
+        })
+      end
+    end
 
     {:noreply, state}
   end

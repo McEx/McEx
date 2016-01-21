@@ -101,7 +101,7 @@ end
 defmodule McEx.World.PlayerTracker do
 
   defmodule PlayerListRecord do
-    defstruct player_pid: nil, mon_ref: nil, uuid: nil, name: nil, gamemode: 0, ping: 0, display_name: nil
+    defstruct eid: nil, player_pid: nil, mon_ref: nil, uuid: nil, name: nil, gamemode: 0, ping: 0, display_name: nil
   end
 
   # Client
