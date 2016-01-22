@@ -10,11 +10,21 @@ defmodule McEx.Player.Supervisor do
   end
 
   def init(:ok) do
+    spawn_link &McEx.Player.KeepAliveSender.loop/0
+
     children = [
       worker(McEx.Player, [], restart: :temporary)
     ]
 
     opts = [strategy: :simple_one_for_one]
     supervise(children, opts)
+  end
+end
+
+defmodule McEx.Player.KeepAliveSender do
+  def loop do
+    :gproc.send({:p, :l, :server_player}, {:server_event, {:keep_alive_send, :rand.uniform(16000), 3}})
+    :timer.sleep(10_000)
+    loop
   end
 end

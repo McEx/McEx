@@ -27,6 +27,7 @@ defmodule McEx.Player do
 
   defmodule PlayerState do
     defstruct(
+        keepalive_state: nil,
         eid: nil,
         name: nil,
         uuid: nil,
@@ -102,9 +103,27 @@ defmodule McEx.Player do
     {:ok, state}
   end
 
+  @doc "Calls the handler for the event we just received from the client."
   def handle_cast({:client_event, event}, state) do
-    state = McEx.Player.ClientEvent.handle(event, state)
-    {:noreply, state}
+    case McEx.Player.ClientEvent.handle(event, state) do
+      {:stop, _, _} = response -> response
+      state -> {:noreply, state}
+    end
+  end
+
+  @doc "Calls the handler for the event we just received from some other process on the server."
+  def handle_cast({:server_event, event}, state) do
+    case McEx.Player.ServerEvent.handle(:c, event, state) do
+      {:stop, _, _} = response -> response
+      state -> {:noreply, state}
+    end
+  end
+  @doc "Calls the handler for the event we just received from some other process on the server."
+  def handle_info({:server_event, event}, state) do
+    case McEx.Player.ServerEvent.handle(:m, event, state) do
+      {:stop, _, _} = response -> response
+      state -> {:noreply, state}
+    end
   end
 
   def handle_info({:DOWN, _ref, :process, connection_pid, _reason}, %{connection: connection_pid, name: name} = data) do
@@ -117,64 +136,6 @@ defmodule McEx.Player do
     # okey
     # i guess we should handle this at some point
     {:stop, :world_down, data}
-  end
-
-  def handle_info({:server_event, {:set_pos, player_name, pos}}, state) do
-    {:noreply, state}
-  end
-
-  def handle_info({:server_event, {:action_chat, message}}, state) do
-    {:noreply, state}
-  end
-
-  def handle_info({:player_list, :join, players}, state) do
-    players_add = for player <- players do
-      %{
-        uuid: player.uuid,
-        name: player.name,
-        property_num: 0,
-        properties: [],
-        gamemode: player.gamemode,
-        ping: player.ping,
-        has_display_name: false,
-        display_name: nil
-      }
-    end
-
-    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
-      action: 0,
-      element_num: Enum.count(players_add),
-      players_add: players_add
-    })
-    for player <- players do
-      if player.player_pid != self do
-        Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.SpawnPlayer{
-          entity_id: player.eid,
-          player_uuid: player.uuid,
-          x: 0, y: 90, z: 0,
-          yaw: 0, pitch: 0,
-          current_item: 0,
-          metadata: [],
-        })
-      end
-    end
-
-    {:noreply, state}
-  end
-  def handle_info({:player_list, :leave, players}, state) do
-    player_leave = for player <- players do
-      %{
-        uuid: player.uuid
-      }
-    end
-
-    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.PlayerListItem{
-      action: 4,
-      element_num: Enum.count(player_leave),
-      players_remove: player_leave
-    })
-
-    {:noreply, state}
   end
 
   def handle_info({:block, :destroy, pos}, state) do

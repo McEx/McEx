@@ -15,7 +15,7 @@ defmodule McEx.Player.ClientEvent do
   end
 
   def handle({:action_digging, mode, {x, _, z} = position, face}, state) do
-    if state == :finished do
+    if mode == :finished do
       chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
       GenServer.cast(:gproc.lookup_pid({:n, :l, {:world, state.world_id, :chunk, chunk_pos}}), {:block_destroy, position})
     end
@@ -24,6 +24,16 @@ defmodule McEx.Player.ClientEvent do
 
   def handle({:action_punch_animation}, state) do
     state
+  end
+
+  @doc "Other part in Player.ServerEvent.handle_info({:server_event, {:keep_alive"
+  def handle({:keep_alive, nonce}, state) do
+    {sent_nonce, _} = state.keepalive_state
+    if nonce == sent_nonce do
+      put_in state.keepalive_state, nil
+    else
+      {:stop, :bad_keep_alive, state}
+    end
   end
 
   def handle(event, state) do

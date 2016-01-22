@@ -2,6 +2,7 @@ defmodule McEx.Player.World do
   alias McEx.Player
   alias McEx.Player.PlayerState
   alias McEx.Player.ClientSettings
+  alias McEx.Net.Connection.Write
   use McEx.Util
 
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do

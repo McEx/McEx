@@ -53,11 +53,15 @@ defmodule McEx.Net.Connection do
   end
   def close_loop(socket, {read, write}) do
     receive do
+      {:die_with, pid} -> 
+        Process.monitor(pid)
       {:DOWN, _ref, :process, _pid, _error} ->
         Process.exit(read, :disconnect)
         Process.exit(write, :disconnect)
         :gen_tcp.close(socket)
+        exit(:normal)
     end
+    close_loop(socket, {read, write})
   end
 
   defmodule Write do

@@ -152,15 +152,15 @@ defmodule McEx.World.PlayerTracker do
   def handle_join(%PlayerListRecord{} = record, state) do
     mon_ref = :erlang.monitor(:process, record.player_pid)
     record = %{record | mon_ref: mon_ref}
-    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:player_list, :join, [record]})
+    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:server_event, {:player_list, :join, [record]}})
     state = update_in state.players, &([record | &1])
-    send(record.player_pid, {:player_list, :join, state.players})
+    send(record.player_pid, {:server_event, {:player_list, :join, state.players}})
     state
   end
   def handle_leave(pid, state) do
     record = Enum.find(state.players, fn(rec) -> rec.player_pid == pid end)
     :erlang.demonitor(record.mon_ref)
-    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:player_list, :leave, [record]})
+    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:server_event, {:player_list, :leave, [record]}})
     update_in state.players, &(Enum.filter(&1, fn(rec) -> rec != record end))
   end
 end

@@ -58,6 +58,7 @@ defmodule McEx.Net.Handlers do
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
     {:ok, player_server} = McEx.Player.Supervisor.start_player({state.socket_manager, self, state.write}, state.user)
+    send(state.socket_manager, {:die_with, player_server})
     state = %{state | player: player_server}
 
     #SpawnPosition
