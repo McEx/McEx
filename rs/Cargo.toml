@@ -17,9 +17,9 @@ opensimplex = "0.2.0"
 #git = "https://github.com/hansihe/Rustler.git"
 
 [dependencies.rustler]
-path = "../../rustler/"
+path = "../../Rustler/"
 [dependencies.rustler_codegen]
-path = "../../rustler/rustler_codegen/"
+path = "../../Rustler/rustler_codegen/"
 
 #[dependencies.bindgen]
 #git = "https://github.com/crabtw/rust-bindgen.git"
