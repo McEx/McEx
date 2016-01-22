@@ -25,7 +25,8 @@ use libc::{ c_int, c_void };
 rustler_export_nifs!("Elixir.McEx.Native.Chunk", 
                      [("n_create", 0, create),
                       ("n_assemble_packet", 2, assemble_packet),
-                      ("n_generate_chunk", 2, generate_chunk)],
+                      ("n_generate_chunk", 2, generate_chunk),
+                      ("n_destroy_block", 2, destroy_block)],
                      Some(on_load));
 
 fn on_load(env: &NifEnv, load_info: NifTerm) -> bool {
@@ -80,6 +81,17 @@ fn generate_chunk<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a
             }
         }
     }
+
+    Ok(15.encode(env))
+}
+
+#[NifTuple] struct BlockPos { x: i32, y: i32, z: i32 }
+fn destroy_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
+    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0], env));
+    let pos: BlockPos = try!(NifDecoder::decode(args[1], env));
+
+    let mut mut_chunk = holder.write().unwrap();
+    mut_chunk.set_block(pos.x as u16, pos.y as u16, pos.z as u16, BlockData::new(0, 0));
 
     Ok(15.encode(env))
 }

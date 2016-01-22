@@ -31,7 +31,7 @@ defmodule McEx.Chunk.Manager do
   end
 
   def start_chunk(state, chunk) when ChunkPos.is_chunk(chunk) do
-    {:ok, pid} = McEx.Chunk.ChunkSupervisor.start_chunk(chunk)
+    {:ok, pid} = McEx.Chunk.ChunkSupervisor.start_chunk(state.world_id, chunk)
     put_in(state.chunks[chunk], %ChunkData{pid: pid})
   end
   def stop_chunk(state, chunk) when ChunkPos.is_chunk(chunk) do

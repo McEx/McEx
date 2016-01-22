@@ -194,7 +194,11 @@ defmodule McEx.Player do
     {:noreply, update_in(data.client_settings.view_distance, fn _ -> distance end)}
   end
 
-  def handle_cast({:client_event, {:action_digging, state, position, face}}, data) do
+  def handle_cast({:client_event, {:action_digging, state, {x, _, z} = position, face}}, data) do
+    if state == :finished do
+      chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
+      GenServer.cast(:gproc.lookup_pid({:n, :l, {:world, data.world_id, :chunk, chunk_pos}}), {:block_destroy, position})
+    end
     {:noreply, data}
   end
 
@@ -262,6 +266,14 @@ defmodule McEx.Player do
       players_remove: player_leave
     })
 
+    {:noreply, state}
+  end
+
+  def handle_info({:block, :destroy, pos}, state) do
+    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.BlockChange{
+      location: pos,
+      block_id: 0,
+    })
     {:noreply, state}
   end
 end

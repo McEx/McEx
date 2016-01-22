@@ -6,8 +6,8 @@ defmodule McEx.Chunk.ChunkSupervisor do
     Supervisor.start_link(__MODULE__, :ok, [name: McEx.Chunk.Supervisor])
   end
 
-  def start_chunk(pos) do
-    Supervisor.start_child(McEx.Chunk.Supervisor, [pos])
+  def start_chunk(world_id, pos) do
+    Supervisor.start_child(McEx.Chunk.Supervisor, [world_id, pos])
   end
 
   def init(:ok) do
@@ -27,8 +27,8 @@ defmodule McEx.Chunk do
 
   use Bitwise
 
-  def start_link(pos, opts \\ []) do
-    GenServer.start_link(__MODULE__, {pos}, opts)
+  def start_link(world_id, pos, opts \\ []) do
+    GenServer.start_link(__MODULE__, {world_id, pos}, opts)
   end
 
   def send_chunk(server, writer) do
@@ -38,11 +38,13 @@ defmodule McEx.Chunk do
     GenServer.cast(server, :stop_chunk)
   end
 
-  def init({pos}) do
+  def init({world_id, pos}) do
     chunk = McEx.Native.Chunk.create
     {:chunk, x, z} = pos
+    :gproc.reg({:n, :l, {:world, world_id, :chunk, pos}})
     McEx.Native.Chunk.generate_chunk(chunk, {x, z})
     {:ok, %{
+        world_id: world_id,
         chunk_resource: chunk,
         pos: pos}}
   end
@@ -74,5 +76,10 @@ defmodule McEx.Chunk do
   end
   def handle_cast(:stop_chunk, state) do
     {:stop, :normal, state}
+  end
+  def handle_cast({:block_destroy, {x, y, z}}, state) do
+    McEx.Native.Chunk.destroy_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)})
+    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:block, :destroy, {x, y, z}})
+    {:noreply, state}
   end
 end

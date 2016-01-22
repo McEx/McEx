@@ -477,6 +477,10 @@ defmodule McEx.Net.Packets.Server do #Clientbound
     data
   end
 
+  packet :play, 0x23, :block_change,
+    location: :position,
+    block_id: :varint
+
   packet :play, 0x26, :map_chunk_bulk,
     sky_light_sent: :bool,
     chunk_column_count: :varint,
