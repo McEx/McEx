@@ -32,6 +32,10 @@ defmodule McEx.Player.ServerEvent do
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
       })
+      Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.EntityHeadLook{
+        entity_id: eid,
+        head_yaw: deg_to_byte(yaw),
+      })
     end
     state
   end
@@ -42,6 +46,10 @@ defmodule McEx.Player.ServerEvent do
         yaw: deg_to_byte(yaw),
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
+      })
+      Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.EntityHeadLook{
+        entity_id: eid,
+        head_yaw: deg_to_byte(yaw),
       })
     end
     state
