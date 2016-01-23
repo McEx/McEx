@@ -119,6 +119,10 @@ defmodule McEx.DataTypes do
       <<num::signed-integer-size(8), data::binary>> = data
       {num, data}
     end
+    def fixed_point_byte(data) do
+      {num, data} = byte(data)
+      {num / 32, data}
+    end
     def u_byte(data) do
       <<num::unsigned-integer-size(8), data::binary>> = data
       {num, data}
@@ -137,13 +141,13 @@ defmodule McEx.DataTypes do
       <<num::signed-integer-size(32), data::binary>> = data
       {num, data}
     end
+    def fixed_point_int(data) do
+      {num, data} = int(data)
+      {num / 32, data}
+    end
     def long(data) do
       <<num::signed-integer-size(64), data::binary>> = data
       {num, data}
-    end
-
-    def fixed_point_int(data) do
-      int(data / 32)
     end
 
     def float(data) do
@@ -205,8 +209,11 @@ defmodule McEx.DataTypes do
       <<varint(byte_size(data))::binary, data::binary>>
     end
 
-    def byte(num) do
+    def byte(num) when is_integer(num) do
       <<num::signed-integer-1*8>>
+    end
+    def fixed_point_byte(num) do
+      byte(round(num * 32))
     end
     def u_byte(num) do
       <<num::unsigned-integer-size(8)>>
@@ -222,12 +229,11 @@ defmodule McEx.DataTypes do
     def int(num) do
       <<num::signed-integer-size(32)>>
     end
+    def fixed_point_int(num) do
+      int(round(num * 32))
+    end
     def long(num) do
       <<num::signed-integer-size(64)>>
-    end
-
-    def fixed_point_int(num) do
-      int(num * 32)
     end
 
     def float(num) do

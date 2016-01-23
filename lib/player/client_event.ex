@@ -1,17 +1,42 @@
 defmodule McEx.Player.ClientEvent do
 
-  def handle({:set_pos, pos}, state) do
-    :gproc.send({:world_member, state.world_id}, {:server_event, {:set_pos, state.name, pos}})
-    put_in(state.position, pos)
+  def handle({:set_pos, pos, on_ground}, state) do
+    delta_pos = calc_delta_pos(pos, state.position)
+    :gproc.send({:p, :l, {:world, state.world_id, :players}},
+        {:server_event, {:entity_move, state.eid, pos, delta_pos, on_ground}})
+
+    %{state |
+      position: pos,
+      on_ground: on_ground}
     |> McEx.Player.World.load_chunks
   end
 
-  def handle({:set_look, look}, state) do
-    put_in state.look, look
+  def handle({:set_pos_look, pos, look, on_ground}, state) do
+    delta_pos = calc_delta_pos(pos, state.position)
+    :gproc.send({:p, :l, {:world, state.world_id, :players}},
+        {:server_event, {:entity_move_look, state.eid, pos, delta_pos, look, on_ground}})
+
+    %{state |
+      position: pos,
+      look: look,
+      on_ground: on_ground}
+    |> McEx.Player.World.load_chunks
+  end
+
+  def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}), do: {:rel_pos, x-x0, y-y0, z-z0}
+
+  def handle({:set_look, look, on_ground}, state) do
+    :gproc.send({:p, :l, {:world, state.world_id, :players}},
+        {:server_event, {:entity_look, state.eid, look, on_ground}})
+
+    %{state |
+      look: look,
+      on_ground: on_ground}
   end
 
   def handle({:set_on_ground, on_ground}, state) do
-    put_in state.on_ground, on_ground
+    %{state |
+      on_ground: on_ground}
   end
 
   def handle({:action_digging, mode, {x, _, z} = position, face}, state) do

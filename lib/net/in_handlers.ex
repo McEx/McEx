@@ -40,6 +40,10 @@ defmodule McEx.Net.Handlers do
     uuid = McEx.UUID.from_hex(verification_response.id)
     state = %{state | user: {true, name, uuid}}
 
+    state = state |> write_packet(%Server.Login.SetCompression{
+      threshold: 256})
+    state = state |> set_compression(256)
+
     state = state |> write_packet(%Server.Login.LoginSuccess{
       username: name, 
       uuid: uuid})
@@ -104,22 +108,15 @@ defmodule McEx.Net.Handlers do
     state
   end
   def handle_packet(%State{player: player} = state, %Client.Play.PlayerPosition{} = msg) do
-    Player.client_events(player, [
-      {:set_pos, {:pos, msg.x, msg.y, msg.z}},
-      {:set_on_ground, msg.on_ground}])
+    Player.client_event(player, {:set_pos, {:pos, msg.x, msg.y, msg.z}, msg.on_ground})
     state
   end
   def handle_packet(%State{player: player} = state, %Client.Play.PlayerLook{} = msg) do
-    Player.client_events(player, [
-      {:set_look, {:look, msg.yaw, msg.pitch}},
-      {:set_on_ground, msg.on_ground}])
+    Player.client_event(player, {:set_look, {:look, msg.yaw, msg.pitch}, msg.on_ground})
     state
   end
   def handle_packet(%State{player: player} = state, %Client.Play.PlayerPositionLook{} = msg) do
-    Player.client_events(player, [
-      {:set_pos, {:pos, msg.x, msg.y, msg.z}},
-      {:set_look, {:look, msg.yaw, msg.pitch}},
-      {:set_on_ground, msg.on_ground}])
+    Player.client_event(player, {:set_pos_look, {:pos, msg.x, msg.y, msg.z}, {:look, msg.yaw, msg.pitch}, msg.on_ground})
     state
   end
 

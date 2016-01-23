@@ -2,12 +2,48 @@ defmodule McEx.Player.ServerEvent do
   alias McEx.Net.Connection.Write
   use McEx.Util
 
+  def deg_to_byte(deg), do: round(deg / 360 * 256)
+
   def handle(:m, {:action_chat, message}, state) do
     IO.inspect {:chat, message}
     state
   end
 
-  def handle(:m, {:set_pos, player_name, pos}, state) do
+  def handle(:m, {:entity_move, eid, _pos, {:rel_pos, dx, dy, dz}, on_ground}, state) do
+    if eid != state.eid do
+      Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.EntityRelativeMove{
+        entity_id: eid,
+        delta_x: dx,
+        delta_y: dy,
+        delta_z: dz,
+        on_ground: on_ground,
+      })
+    end
+    state
+  end
+  def handle(:m, {:entity_move_look, eid, _pos, {:rel_pos, dx, dy, dz}, {:look, yaw, pitch}, on_ground}, state) do
+    if eid != state.eid do
+      Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.EntityLookRelativeMove{
+        entity_id: eid,
+        delta_x: dx,
+        delta_y: dy,
+        delta_z: dz,
+        yaw: deg_to_byte(yaw),
+        pitch: deg_to_byte(pitch),
+        on_ground: on_ground,
+      })
+    end
+    state
+  end
+  def handle(:m, {:entity_look, eid, {:look, yaw, pitch}, on_ground}, state) do
+    if eid != state.eid do
+      Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.EntityLook{
+        entity_id: eid,
+        yaw: deg_to_byte(yaw),
+        pitch: deg_to_byte(pitch),
+        on_ground: on_ground,
+      })
+    end
     state
   end
 

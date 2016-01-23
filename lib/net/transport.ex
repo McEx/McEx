@@ -28,7 +28,7 @@ defmodule McEx.Net.HandlerUtils do
       alias McEx.Net.Packets.Server
       alias McEx.Net.Crypto
       alias McEx.Net.Connection.Read.State
-      import McEx.Net.Connection.Read, only: [write_packet: 2 , read_packet: 1, set_encr: 2]
+      import McEx.Net.Connection.Read, only: [write_packet: 2 , read_packet: 1, set_encr: 2, set_compression: 2]
     end
   end
 end
@@ -38,6 +38,7 @@ defmodule McEx.Net.Connection do
   alias McEx.Net.Packets.Client
   alias McEx.Net.Packets.Server
   alias McEx.Net.Crypto
+  require Logger
 
   defmodule ClosedError do
     defexception []
@@ -67,30 +68,64 @@ defmodule McEx.Net.Connection do
   defmodule Write do
     def start_write(socket) do
       try do
-        write_loop(socket, nil)
+        write_loop(socket, nil, nil)
       rescue
         _ in ClosedError -> nil
       end
     end
-    def write_loop(socket, encr_data) do
+    def write_loop(socket, encr_data, compr_threshold) do
       receive do
-        {:write, data} -> 
-          encr_data = write_loop_write(socket, encr_data, data)
-          write_loop(socket, encr_data)
+        #{:write, data} -> 
+        #  encr_data = write_loop_write(socket, encr_data, data)
+        #  write_loop(socket, encr_data, compr_threshold)
         {:write_struct, struct} ->
-          packet_data = Server.write_packet(struct)
-          data = <<McEx.DataTypes.Encode.varint(byte_size(packet_data))::binary, packet_data::binary>>
+          packet_data = try do
+            Server.write_packet(struct)
+          rescue
+            x ->
+              Logger.error(Exception.format(:error, x) <> "When encoding packet:\n" <> inspect(struct) <> "\n")
+              exit(:shutdown)
+          end
+          data = construct_packet(packet_data, compr_threshold)
+          #<<McEx.DataTypes.Encode.varint(byte_size(packet_data))::binary, packet_data::binary>>
           encr_data = write_loop_write(socket, encr_data, data)
-          write_loop(socket, encr_data)
+          write_loop(socket, encr_data, compr_threshold)
         {:set_encr, encr_data} ->
-          write_loop(socket, encr_data)
+          write_loop(socket, encr_data, compr_threshold)
+        {:set_compression, threshold} ->
+          write_loop(socket, encr_data, threshold)
       end
     end
+
+    def construct_packet(packet_data, nil) do
+      [McEx.DataTypes.Encode.varint(byte_size(packet_data)), packet_data]
+    end
+    def construct_packet(packet_data, compr_threshold) when byte_size(packet_data) > compr_threshold do
+      data_size = McEx.DataTypes.Encode.varint(byte_size(packet_data))
+      compressed = deflate(packet_data)
+      total_length = McEx.DataTypes.Encode.varint(byte_size(data_size) + IO.iodata_length(compressed))
+      [total_length, data_size, compressed]
+    end
+    def construct_packet(packet_data, _) do
+      [McEx.DataTypes.Encode.varint(byte_size(packet_data) + 1), 0, packet_data]
+    end
+
+    def deflate(data) do
+      # TODO: Reuse zstream
+      z = :zlib.open
+      :zlib.deflateInit(z)
+      compr = :zlib.deflate(z, data, :finish)
+      :zlib.deflateEnd(z)
+      :zlib.close(z)
+      compr
+    end
+
     def write_loop_write(socket, nil, data) do
       write_loop_send(socket, data)
       nil
     end
     def write_loop_write(socket, encr, data) do
+      data = IO.iodata_to_binary(data)
       {encr, ciphertext}  = Crypto.encrypt(data, encr)
       write_loop_send(socket, ciphertext)
       encr
@@ -110,6 +145,7 @@ defmodule McEx.Net.Connection do
   defmodule Read do
     defmodule State do
       defstruct socket: nil, 
+      compression: nil,
       write: nil,
       player: nil,
       socket_manager: nil,
@@ -129,6 +165,10 @@ defmodule McEx.Net.Connection do
     def set_encr(%State{write: write} = state, encr) do
       send write, {:set_encr, encr}
       %{state | in_encryption: encr}
+    end
+    def set_compression(%State{write: write} = state, threshold) do
+      send write, {:set_compression, threshold}
+      %{state | compression: threshold}
     end
 
     def start_read(socket, write, socket_manager) do
@@ -159,10 +199,32 @@ defmodule McEx.Net.Connection do
       {enc, data} = Crypto.decrypt(enc_data, enc)
       {%{state | in_encryption: enc}, data}
     end
-    def read_packet(%State{mode: mode} = state) do
+
+    def read_packet(%State{mode: mode, compression: nil} = state) do
       {state, packet_length} = McEx.DataTypes.Decode.Util.transport_read_varint(state)
       {state, data} = read(state, packet_length)
       {state, Client.read_packet(data, mode)}
+    end
+    def read_packet(%State{mode: mode, compression: threshold} = state) do
+      {state, data_length} = McEx.DataTypes.Decode.Util.transport_read_varint(state)
+      {state, packet_length} = McEx.DataTypes.Decode.Util.transport_read_varint(state)
+      if packet_length == 0 do
+        {state, data} = read(state, data_length - 1)
+        {state, Client.read_packet(data, mode)}
+      else
+        {state, data} = read(state, data_length - byte_size(McEx.DataTypes.Encode.varint(packet_length)))
+        infl = inflate(data)
+        {state, Client.read_packet(infl, mode)}
+      end
+    end
+
+    def inflate(data) do
+      z = :zlib.init
+      :zlib.inflateInit(z)
+      infl = :zlib.inflate(z, data)
+      :zlib.inflateEnd(z)
+      :zlib.close(z)
+      infl
     end
 
     def write_packet(%State{write: write} = state, struct) do

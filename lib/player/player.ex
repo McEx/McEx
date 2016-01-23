@@ -93,13 +93,9 @@ defmodule McEx.Player do
       world_pid: world_pid,
       chunk_manager_pid: chunk_manager_pid}
 
-    :gproc.reg({:p, :l, :server_player})
+    :gproc.reg({:p, :l, :server_player}, {state.name, state.uuid})
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
-
-    #McEx.Chunk.Manager.lock_chunk(chunk_manager_pid, {:chunk, 0, 0}, self)
-    #{:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_mananger_pid, {:chunk, 0, 0})
-    #McEx.Chunk.send_chunk(chunk, writer)
     {:ok, state}
   end
 

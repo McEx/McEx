@@ -383,9 +383,9 @@ defmodule McEx.Net.Packets.Server do #Clientbound
     entity_id: :varint
   packet :play, 0x15, :entity_relative_move,
     entity_id: :varint,
-    delta_x: :byte,
-    delta_y: :byte,
-    delta_z: :byte,
+    delta_x: :fixed_point_byte,
+    delta_y: :fixed_point_byte,
+    delta_z: :fixed_point_byte,
     on_ground: :bool
   packet :play, 0x16, :entity_look,
     entity_id: :varint,
