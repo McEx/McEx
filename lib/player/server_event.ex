@@ -1,6 +1,9 @@
 defmodule McEx.Player.ServerEvent do
   alias McEx.Net.Connection.Write
+  alias McEx.Net.Packets
   use McEx.Util
+
+  def write_packet(state, struct), do: Write.write_packet(state.writer, struct)
 
   def deg_to_byte(deg), do: round(deg / 360 * 256)
 
@@ -68,6 +71,13 @@ defmodule McEx.Player.ServerEvent do
           put_in(state.keepalive_state, {sent_nonce, skipped + 1})
         end
     end
+  end
+
+  def handle(:m, {:TEMP_set_crouch, eid, status}, state) do
+    write_packet(state, %Packets.Server.Play.EntityMetadata{
+      entity_id: eid,
+      metadata: [McEx.EntityMeta.Entity.status({false, status, false, false, false})]})
+    state
   end
 
   def handle(:m, {:player_list, action, players}, state) do

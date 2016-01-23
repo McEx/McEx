@@ -1,9 +1,12 @@
 defmodule McEx.Player.ClientEvent do
+  def bcast_players(world_id, msg) do
+    :gproc.send({:p, :l, {:world, world_id, :players}}, msg)
+  end
+  def bcast_players_sev(world_id, msg), do: bcast_players(world_id, {:server_event, msg})
 
   def handle({:set_pos, pos, on_ground}, state) do
     delta_pos = calc_delta_pos(pos, state.position)
-    :gproc.send({:p, :l, {:world, state.world_id, :players}},
-        {:server_event, {:entity_move, state.eid, pos, delta_pos, on_ground}})
+    bcast_players_sev(state.world_id, {:entity_move, state.eid, pos, delta_pos, on_ground})
 
     %{state |
       position: pos,
@@ -13,8 +16,7 @@ defmodule McEx.Player.ClientEvent do
 
   def handle({:set_pos_look, pos, look, on_ground}, state) do
     delta_pos = calc_delta_pos(pos, state.position)
-    :gproc.send({:p, :l, {:world, state.world_id, :players}},
-        {:server_event, {:entity_move_look, state.eid, pos, delta_pos, look, on_ground}})
+    bcast_players_sev(state.world_id, {:entity_move_look, state.eid, pos, delta_pos, look, on_ground})
 
     %{state |
       position: pos,
@@ -26,8 +28,7 @@ defmodule McEx.Player.ClientEvent do
   def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}), do: {:rel_pos, x-x0, y-y0, z-z0}
 
   def handle({:set_look, look, on_ground}, state) do
-    :gproc.send({:p, :l, {:world, state.world_id, :players}},
-        {:server_event, {:entity_look, state.eid, look, on_ground}})
+    bcast_players_sev(state.world_id, {:entity_look, state.eid, look, on_ground})
 
     %{state |
       look: look,
@@ -48,6 +49,11 @@ defmodule McEx.Player.ClientEvent do
   end
 
   def handle({:action_punch_animation}, state) do
+    state
+  end
+
+  def handle({:player_set_crouch, _, status}, state) do
+    bcast_players_sev(state.world_id, {:TEMP_set_crouch, state.eid, status})
     state
   end
 
