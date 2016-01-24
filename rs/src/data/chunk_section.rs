@@ -30,6 +30,19 @@ impl ChunkSection {
         self.set_block_raw(x, y, z, block);
     }
 
+    //pub fn calc_skylight(&mut self, blocks_above: [u16; 16]) {
+    //    for (z_idx, slice) in blocks_above.iter().enumerate() {
+    //        let mut slice_a = slice;
+    //        for x_idx in 0..16 {
+    //            slice_a = slice_a >> 1;
+    //            let col_light = (slice_a && 1) == 1;
+    //            if col_light {
+    //                
+    //            }
+    //        }
+    //    }
+    //}
+
     pub fn recount(&mut self) {
         self.count = 0;
         for block in &self.block_data[..] {

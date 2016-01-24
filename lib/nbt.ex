@@ -4,6 +4,10 @@ defmodule McEx.NBT do
   def write(struct), do: McEx.NBT.Write.write(struct)
 
   defmodule Read do
+    # GZip
+    def read_gzip(bin) do
+      read(:zlib.gunzip(bin))
+    end
     def read(bin) do
       {bin, _} = read_tag_id(bin)
       {bin, data} = read_tag(bin, :compound)
@@ -95,7 +99,7 @@ defmodule McEx.NBT do
   defmodule Write do
     def write(struct) do
       {:compound, name, value} = struct
-      write_tag(:compound, name, value)
+      IO.iodata_to_binary write_tag(:compound, name, value)
     end
 
     defp write_tag_id(tag) do
@@ -127,41 +131,56 @@ defmodule McEx.NBT do
     defp write_type(:float, value) when is_float(value), do: <<value::signed-float-4*8>>
     defp write_type(:double, value) when is_float(value), do: <<value::signed-float-8*8>>
     defp write_type(:byte_array, value) when is_binary(value) do
-      <<byte_size(value)::signed-integer-4*8, value::binary>>
+      [<<byte_size(value)::signed-integer-4*8>>, value]
     end
     defp write_type(:string, value) when is_binary(value) do
-      <<byte_size(value)::unsigned-integer-2*8, value::binary>>
+      [<<byte_size(value)::unsigned-integer-2*8>>, value]
     end
     defp write_type(:list, values) when is_list(values) do
       {bin, tag} = write_list_values(<<>>, values)
-      <<write_tag_id(tag)::binary, write_type(:int, length(values))::binary, bin::binary>>
+      [write_tag_id(tag), <<write_type(:int, length(values))::binary>>, bin]
     end
     defp write_type(:compound, [{tag, name, value} | rest]) do
-      <<write_tag(tag, name, value)::binary, write_type(:compound, rest)::binary>>
+      [write_tag(tag, name, value), write_type(:compound, rest)]
     end
     defp write_type(:compound, []) do
-      <<write_tag_id(:end)::binary>>
+      write_tag_id(:end)
     end
     defp write_type(:int_array, values) when is_list(values) do
-      <<write_type(:int, length(values))::binary, write_int_array_values(<<>>, values)::binary>>
+      [write_type(:int, length(values)), write_int_array_values(values)]
     end
 
-    defp write_list_values(bin, _, []) do
-      bin
+    defp write_list_values(values) do
+      {tag, nil, _} = hd(values)
+      write_list_values(tag, values)
     end
-    defp write_list_values(bin, tag, [{tag, nil, value} | rest]) do
-      write_list_values(<<bin::binary, write_type(tag, value)::binary>>, tag, rest)
-    end
-    defp write_list_values(bin, values = [{tag, nil, _} | rest]) do
-      {write_list_values(bin, tag, values), tag}
+    defp write_list_values(tag, values) do
+      Enum.map(values, fn({f_tag, nil, val}) -> 
+        ^tag = f_tag
+        write_type(tag, val) 
+      end)
     end
 
-    defp write_int_array_values(bin, []) do
-      bin
+    #defp write_list_values(bin, _, []) do
+    #  bin
+    #end
+    #defp write_list_values(bin, tag, [{tag, nil, value} | rest]) do
+    #  write_list_values(<<bin::binary, write_type(tag, value)::binary>>, tag, rest)
+    #end
+    #defp write_list_values(bin, values = [{tag, nil, _} | rest]) do
+    #  {write_list_values(bin, tag, values), tag}
+    #end
+
+    defp write_int_array_values(values) do
+      Enum.map(values, fn(value) -> write_type(:int, value) end)
     end
-    defp write_int_array_values(bin, [value | rest]) when is_integer(value) do
-      write_int_array_values(<<bin::binary, write_type(:int, value)::binary>>, rest)
-    end
+
+    #defp write_int_array_values(bin, []) do
+    #  bin
+    #end
+    #defp write_int_array_values(bin, [value | rest]) when is_integer(value) do
+    #  write_int_array_values(<<bin::binary, write_type(:int, value)::binary>>, rest)
+    #end
   end
 
 end
