@@ -1,0 +1,13 @@
+[package]
+name = "genbiome"
+version = "0.1.0"
+authors = ["Hansihe <hansihe@hansihe.com>"]
+
+[dependencies]
+image = "*"
+opensimplex = "*"
+noise = "*"
+
+[[bin]]
+name = "biometest"
+path = "src/bin.rs"

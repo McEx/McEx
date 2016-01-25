@@ -18,3 +18,4 @@ Session.vim
 *.dll
 *.exe
 /rs/target/
+/genbiome/target/
