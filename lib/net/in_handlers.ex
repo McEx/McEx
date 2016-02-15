@@ -21,9 +21,17 @@ defmodule McEx.Net.Handlers do
 
   # Login
   def handle_packet(%State{} = state, %Client.Login.LoginStart{name: name} = s) do
-    auth_init_data = {{pubkey, _}, token} = McEx.Net.Crypto.get_auth_init_data
-    state = write_packet(state, %Server.Login.EncryptionRequest{server_id: "", public_key: pubkey, verify_token: token})
-    %State{state | name: name, user: {false, name, nil}, auth_init_data: auth_init_data}
+    online_mode = Application.get_env(:mc_ex, :auth)[:offline]
+
+    if online_mode do
+      auth_init_data = {{pubkey, _}, token} = McEx.Net.Crypto.get_auth_init_data
+      state = write_packet(state, %Server.Login.EncryptionRequest{server_id: "", public_key: pubkey, verify_token: token})
+      %State{state | name: name, user: {false, name, nil}, auth_init_data: auth_init_data}
+    else
+      uuid = McEx.UUID.from_hex(String.replace(UUID.uuid4, "-", ""))
+      state = %{state | user: {true, name, uuid}}
+      finish_login(state)
+    end
   end
   def handle_packet(
         %State{auth_init_data: {{pub_key, priv_key}, token}, name: name} = state, 
@@ -39,6 +47,12 @@ defmodule McEx.Net.Handlers do
     ^name = verification_response.name
     uuid = McEx.UUID.from_hex(verification_response.id)
     state = %{state | user: {true, name, uuid}}
+
+    finish_login(state)
+  end
+
+  def finish_login(state) do
+    {true, name, uuid} = state.user
 
     state = state |> write_packet(%Server.Login.SetCompression{
       threshold: 256})
@@ -67,7 +81,7 @@ defmodule McEx.Net.Handlers do
 
     #SpawnPosition
     state = write_packet(state, %Server.Play.SpawnPosition{
-      location: {0, 90, 0}})
+      location: {0, 100, 0}})
     #PlayerAbilities
     state = write_packet(state, %Server.Play.PlayerAbilities{
       flags: <<0b11111111::8>>,
@@ -76,7 +90,7 @@ defmodule McEx.Net.Handlers do
     #PlayerPositionLook
     state = write_packet(state, %Server.Play.PlayerPositionLook{
       x: 0,
-      y: 90,
+      y: 100,
       z: 0,
       yaw: 0,
       pitch: 0,
@@ -147,6 +161,7 @@ defmodule McEx.Net.Handlers do
 
   def handle_packet(%State{player: player} = state, %Client.Play.HeldItemChange{} = msg) do
     Player.client_event(player, {:set_held_item, msg.slot})
+    state
   end
 
   def handle_packet(%State{player: player} = state, %Client.Play.Animation{}) do

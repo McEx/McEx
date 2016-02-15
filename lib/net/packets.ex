@@ -535,5 +535,7 @@ defmodule McEx.Net.Packets.Server do #Clientbound
     flying_speed: :float,
     walking_speed: :float
 
+  packet :play, 0x40, :disconnect, reason: :chat
+
   use McEx.Net.Packets.Macros.End
 end

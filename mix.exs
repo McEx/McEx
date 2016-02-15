@@ -5,6 +5,7 @@ defmodule McEx.Mixfile do
     [app: :mc_ex,
      version: "0.0.1",
      elixir: "~> 1.0",
+     elixirc_paths: ["lib", "plugins"],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -33,7 +34,8 @@ defmodule McEx.Mixfile do
      {:cutkey, github: "imtal/cutkey"},
      {:ibrowse, github: "cmullaparthi/ibrowse"},
      {:httpotion, "~> 2.1.0"},
-     {:gproc, "~> 0.5.0"}]
+     {:gproc, "~> 0.5.0"},
+     {:uuid, "~> 1.1"}]
   end
 end
 

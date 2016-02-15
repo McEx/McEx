@@ -27,6 +27,13 @@ impl BlockData {
     pub fn is_air(&self) -> bool {
         self.value == 0
     }
+
+    pub fn get_id(&self) -> u16 {
+        self.value >> 4
+    }
+    pub fn get_meta(&self) -> u8 {
+        (self.value & 15) as u8
+    }
 }
 impl Default for BlockData {
     fn default() -> BlockData {

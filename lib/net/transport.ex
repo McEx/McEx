@@ -47,8 +47,10 @@ defmodule McEx.Net.Connection do
   def start_serve(socket) do
     {:ok, write_pid} = Task.start(McEx.Net.Connection.Write, :start_write, [socket])
     Process.monitor(write_pid)
+    IO.inspect {:write, write_pid}
     {:ok, read_pid} = Task.start(McEx.Net.Connection.Read, :start_read, [socket, write_pid, self])
     Process.monitor(read_pid)
+    IO.inspect {:read, read_pid}
 
     close_loop(socket, {read_pid, write_pid})
   end
@@ -56,7 +58,8 @@ defmodule McEx.Net.Connection do
     receive do
       {:die_with, pid} -> 
         Process.monitor(pid)
-      {:DOWN, _ref, :process, _pid, _error} ->
+      {:DOWN, ref, :process, pid, error} ->
+        IO.inspect {:DOWN, ref, :process, pid, error}
         Process.exit(read, :disconnect)
         Process.exit(write, :disconnect)
         :gen_tcp.close(socket)
@@ -89,6 +92,10 @@ defmodule McEx.Net.Connection do
           data = construct_packet(packet_data, compr_threshold)
           #<<McEx.DataTypes.Encode.varint(byte_size(packet_data))::binary, packet_data::binary>>
           encr_data = write_loop_write(socket, encr_data, data)
+
+          # TODO: This should only be done when big packets are sent
+          :erlang.garbage_collect
+
           write_loop(socket, encr_data, compr_threshold)
         {:set_encr, encr_data} ->
           write_loop(socket, encr_data, compr_threshold)

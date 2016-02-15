@@ -4,4 +4,5 @@
   "hexate": {:hex, :hexate, "0.5.1"},
   "httpotion": {:hex, :httpotion, "2.1.0"},
   "ibrowse": {:git, "git://github.com/cmullaparthi/ibrowse.git", "5ee4a806611fcf25cc74155871571e9983a0d0fc", []},
-  "poison": {:hex, :poison, "1.4.0"}}
+  "poison": {:hex, :poison, "1.4.0"},
+  "uuid": {:hex, :uuid, "1.1.3"}}

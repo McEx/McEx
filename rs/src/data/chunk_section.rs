@@ -1,6 +1,32 @@
 use super::BlockData;
 use super::{ SECTION_BUF_LEN };
 
+// TODO: This might be faster if we eliminate the branch?
+fn nibble_array_get(arr: &[u8; SECTION_BUF_LEN/2], idx: usize) -> u8 {
+    let val = arr[idx >> 1];
+    // TODO: Is this right?
+    match idx % 2 {
+        0 => val & 0x0f,
+        _ => val >> 4,
+    }
+}
+// TODO: This might be faster if we eliminate the branch?
+fn nibble_array_put(arr: &mut [u8; SECTION_BUF_LEN/2], idx: usize, val: u8) {
+    let arr_idx = idx >> 1;
+    let orig = arr[arr_idx];
+    arr[arr_idx] = match idx % 2 {
+        0 => (orig & 0xf0) | (val & 0x0f),
+        _ => (orig & 0x0f) | (val << 4),
+    };
+}
+
+#[derive(PartialEq, Clone)]
+pub enum SkylightRayCastState {
+    Finished,
+    CastShade,
+    CastLight,
+}
+
 pub struct ChunkSection {
     block_data: [BlockData; SECTION_BUF_LEN], // 2 bytes per block
     block_light: [u8; SECTION_BUF_LEN / 2], // 1/2 byte per block
@@ -17,7 +43,6 @@ impl ChunkSection {
     pub fn get_block(&self, x: u16, y: u16, z: u16) -> &BlockData {
         &self.block_data[ChunkSection::block_array_index(x, y, z)]
     }
-
     pub fn set_block_raw(&mut self, x: u16, y: u16, z: u16, block: BlockData) {
         self.block_data[ChunkSection::block_array_index(x, y, z)] = block;
     }
@@ -30,18 +55,55 @@ impl ChunkSection {
         self.set_block_raw(x, y, z, block);
     }
 
-    //pub fn calc_skylight(&mut self, blocks_above: [u16; 16]) {
-    //    for (z_idx, slice) in blocks_above.iter().enumerate() {
-    //        let mut slice_a = slice;
-    //        for x_idx in 0..16 {
-    //            slice_a = slice_a >> 1;
-    //            let col_light = (slice_a && 1) == 1;
-    //            if col_light {
-    //                
-    //            }
-    //        }
-    //    }
-    //}
+    pub fn get_skylight_value(&self, x: u16, y: u16, z: u16) -> u8 {
+        nibble_array_get(&self.skylight, 
+                         ChunkSection::block_array_index(x, y, z))
+    }
+    pub fn set_skylight_value(&mut self, x: u16, y: u16, z: u16, val: u8) {
+        nibble_array_put(&mut self.skylight, 
+                         ChunkSection::block_array_index(x, y, z), val);
+    }
+    pub fn get_blocklight_value(&self, x: u16, y: u16, z: u16) -> u8 {
+        nibble_array_get(&self.block_light, 
+                         ChunkSection::block_array_index(x, y, z))
+    }
+    pub fn set_blocklight_value(&mut self, x: u16, y: u16, z: u16, val: u8) {
+        nibble_array_put(&mut self.block_light, 
+                         ChunkSection::block_array_index(x, y, z), val);
+    }
+
+    pub fn cast_skylight_ray(&mut self, x: u16, z: u16, 
+                         over: SkylightRayCastState) -> SkylightRayCastState {
+        fn is_opaque(block: u16) -> bool { block != 0 }
+
+        if over == SkylightRayCastState::Finished { return over; }
+
+        let mut hit_opaque = 
+            if over == SkylightRayCastState::CastShade { true } else { false };
+
+        for y in (0..16).rev() {
+            let curr_skylight = self.get_skylight_value(x, y, z);
+            let curr_id = self.get_block(x, y, z).get_id();
+            if hit_opaque {
+                if curr_skylight != 15 { return SkylightRayCastState::Finished; }
+                self.set_skylight_value(x, y, z, 0);
+            } else {
+                if is_opaque(curr_id) { 
+                    if curr_skylight != 15 { return SkylightRayCastState::Finished; }
+                    self.set_skylight_value(x, y, z, 0);
+                    hit_opaque = true; 
+                } else {
+                    self.set_skylight_value(x, y, z, 15);
+                }
+            }
+        }
+
+        if hit_opaque {
+            SkylightRayCastState::CastShade
+        } else {
+            SkylightRayCastState::CastLight
+        }
+    }
 
     pub fn recount(&mut self) {
         self.count = 0;

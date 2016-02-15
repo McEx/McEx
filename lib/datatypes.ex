@@ -199,7 +199,7 @@ defmodule McEx.DataTypes do
     end
 
     def string(string) do
-      <<varint(byte_size(string))::binary, string::binary>>
+      <<varint(IO.iodata_length(string))::binary, IO.iodata_to_binary(string)::binary>>
     end
     def chat(struct) do
       string(Poison.Encoder.encode(struct, []))

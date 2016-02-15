@@ -34,7 +34,7 @@ defmodule McEx.Player do
         connection: nil,
         reader: nil,
         writer: nil,
-        position: {:pos, 0, 90, 0},
+        position: {:pos, 0, 100, 0},
         look: %PlayerLook{},
         on_ground: true,
         client_settings: %ClientSettings{},

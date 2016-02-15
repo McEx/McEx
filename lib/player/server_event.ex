@@ -66,11 +66,17 @@ defmodule McEx.Player.ServerEvent do
         put_in(state.keepalive_state, {nonce, 0})
       {sent_nonce, skipped} ->
         if skipped > max_skipped do
+          Write.write_packet(state.writer, %Packets.Server.Play.Disconnect{reason: %{text: "Timeout"}})
           {:stop, :timeout, state}
         else
           put_in(state.keepalive_state, {sent_nonce, skipped + 1})
         end
     end
+  end
+
+  def handle(:m, {:kick, reason}, state) do
+    Write.write_packet(state.writer, %Packets.Server.Play.Disconnect{reason: %{text: reason}})
+    state
   end
 
   def handle(:m, {:TEMP_set_crouch, eid, status}, state) do
@@ -107,7 +113,7 @@ defmodule McEx.Player.ServerEvent do
         Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.SpawnPlayer{
           entity_id: player.eid,
           player_uuid: player.uuid,
-          x: 0, y: 90, z: 0,
+          x: 0, y: 260, z: 0,
           yaw: 0, pitch: 0,
           current_item: 0,
           metadata: [],

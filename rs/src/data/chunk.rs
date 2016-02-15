@@ -1,11 +1,12 @@
 use super::{ ChunkSection, BlockData };
 use super::{ CHUNK_SECTION_HEIGHT, BIOME_BUF_LEN, MAX_BITMASK, SECTION_BUF_LEN };
+use super::chunk_section::SkylightRayCastState;
 #[allow(unused_imports)]
 use super::byteorder::{LittleEndian, WriteBytesExt};
 
 #[NifResource]
 pub struct Chunk {
-    sections: [ChunkSection; CHUNK_SECTION_HEIGHT],
+    sections: [Box<ChunkSection>; CHUNK_SECTION_HEIGHT],
     biome: [u8; BIOME_BUF_LEN], // 1 byte per block column
 }
 
@@ -31,6 +32,18 @@ impl Chunk {
         self.sections[Chunk::section_array_index(y)].set_block(x, y, z, block);
     }
 
+    pub fn clean_recalc_skylight(&mut self) {
+        for x in 0..16 {
+            for z in 0..16 {
+                let mut state = SkylightRayCastState::CastLight;
+                'col: for y in (0..16).rev() {
+                    state = self.sections[y].cast_skylight_ray(x, z, state);
+                    if state == SkylightRayCastState::Finished { break 'col; }
+                }
+            }
+        }
+    }
+
     fn count_bytes(entire_chunk: bool, num_sections: u8, skylight: bool) -> u32 {
         let mut byte_size: u32 = 0;
 
@@ -43,7 +56,8 @@ impl Chunk {
         byte_size
     }
 
-    pub fn get_transmit_size(&self, skylight: bool, entire_chunk: bool, bitmask: u16) -> usize {
+    pub fn get_transmit_size(&self, skylight: bool, entire_chunk: bool, bitmask: u16
+                             ) -> usize {
         let mut section_bitmask: u16;
         if entire_chunk {
             section_bitmask = MAX_BITMASK;
@@ -124,8 +138,8 @@ impl Chunk {
 impl Default for Chunk {
     fn default() -> Chunk {
         Chunk {
-            sections: [ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ChunkSection::default(), ],
-            biome: [0; BIOME_BUF_LEN],
+            sections: [Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), Box::new(ChunkSection::default()), ],
+            biome: [6; BIOME_BUF_LEN],
         }
     }
 }
