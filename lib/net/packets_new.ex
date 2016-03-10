@@ -29,7 +29,7 @@ define_packets = fn(mod_name, state_name, mod_data) ->
 
   defmodule String.to_atom(mod_name) do
     for {packet_name, packet_data} <- mod_data do
-      IO.inspect packet_data
+      #IO.inspect packet_data
       def test(unquote(packet_name)), do: "woo"
     end
   end

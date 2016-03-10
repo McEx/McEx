@@ -35,7 +35,8 @@ defmodule McEx.Mixfile do
      {:ibrowse, github: "cmullaparthi/ibrowse"},
      {:httpotion, "~> 2.1.0"},
      {:gproc, "~> 0.5.0"},
-     {:uuid, "~> 1.1"}]
+     {:uuid, "~> 1.1"},
+     {:mc_protocol, path: "../elixir_mc_protocol"}]
   end
 end
 

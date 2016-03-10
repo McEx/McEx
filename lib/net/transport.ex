@@ -6,12 +6,13 @@ defmodule McEx.Net.Connection.Supervisor do
   end
 
   def serve_socket(supervisor, socket) do
-    Supervisor.start_child(supervisor, [fn -> McEx.Net.Connection.start_serve(socket) end])
+    #Supervisor.start_child(supervisor, [fn -> McEx.Net.Connection.start_serve(socket) end])
+    Supervisor.start_child(supervisor, [socket])
   end
 
   def init(:ok) do
     children = [
-      worker(Task, [], restart: :temporary)
+      worker(McEx.Net.ConnectionNew, [], restart: :temporary)
     ]
 
     opts = [
@@ -33,6 +34,12 @@ defmodule McEx.Net.HandlerUtils do
   end
 end
 
+defmodule ClosedError do
+  defexception []
+  def message(e) do
+    "Connection closed"
+  end
+end
 
 defmodule McEx.Net.Connection do
   alias McEx.Net.Packets.Client

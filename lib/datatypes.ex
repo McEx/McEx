@@ -1,4 +1,5 @@
 defmodule McEx.DataTypes do
+  use Bitwise
 
   defmacro __using__(_opts) do
     quote do
@@ -65,8 +66,23 @@ defmodule McEx.DataTypes do
 
     @spec varint(binary) :: {integer, binary}
     def varint(data) do
-      :gpb.decode_varint(data)
+      #:gpb.decode_varint(data)
+      {:ok, resp} = varint?(data)
+      resp
     end
+
+    def varint?(data) do
+      decode_varint(data, 0, 0)
+    end
+    defp decode_varint(<<1::1, curr::7, rest::binary>>, num, acc) when num < (64-7) do
+      decode_varint(rest, num+7, (curr <<< num) + acc)
+    end
+    defp decode_varint(<<0::1, curr::7, rest::binary>>, num, acc) do
+      {:ok, {(curr <<< num) + acc, rest}}
+    end
+    defp decode_varint(_, num, _) when num >= (64-7), do: :too_big
+    defp decode_varint("", _, _), do: :incomplete
+    defp decode_varint(_, _, _), do: :error
 
     @spec bool(binary) :: {boolean, binary}
     def bool(<<value::size(8), rest::binary>>) do

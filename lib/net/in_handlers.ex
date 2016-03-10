@@ -1,72 +1,128 @@
+defmodule McEx.Net.LegacyProtocolHandler do
+  @behaviour McEx.Net.ConnectionNew.ProtocolHandler
+
+  defmodule HandlerState do
+    defstruct mode: :init, name: nil, user: {false, nil, nil}, auth_init_data: nil,
+    player: nil, entity_id: nil
+
+    def set_mode(%__MODULE__{} = state, mode) when mode in [:init, :status, :login, :play] do
+      %{state | mode: mode}
+    end
+  end
+
+  def initial_state do
+    %HandlerState{}
+  end
+
+  def packet_in(packet_data, state) do
+    packet = McEx.Net.Packets.Client.read_packet(packet_data, state.handler_state.mode)
+    McEx.Net.Handlers.handle_packet(state, packet)
+  end
+end
+
 defmodule McEx.Net.Handlers do
-  use McEx.Net.HandlerUtils
   alias McEx.Player
+  alias McEx.Net.LegacyProtocolHandler.HandlerState
+  alias McEx.Net.ConnectionNew.State
+  alias McEx.Net.Packets.Client
+  alias McEx.Net.Packets.Server
   require Logger
+
+  def write_packet(state, packet) do
+    McEx.Net.ConnectionNew.State.write_packet(state, packet)
+    state
+  end
+  def set_encr(state, encr) do
+    McEx.Net.ConnectionNew.State.set_encr(state, encr)
+  end
+  def set_compression(state, compr) do
+    McEx.Net.ConnectionNew.State.set_compression(state, compr)
+  end
 
   # Init
   def handle_packet(state, %Client.Init.Handshake{next_mode: mode}) do
-    State.set_mode(state, case mode do
+    # TODO
+    state 
+    |> McEx.Net.ConnectionNew.State.handler_state(HandlerState.set_mode(state.handler_state, case mode do
       1 -> :status
       2 -> :login
-    end)
+    end))
   end
 
   # Status
-  def handle_packet(%State{} = state, %Client.Status.Request{}) do
+  def handle_packet(state, %Client.Status.Request{}) do
     write_packet(state, %Server.Status.Response{response: McEx.Net.Connection.server_list_response})
   end
-  def handle_packet(%State{} = state, %Client.Status.Ping{payload: payload}) do
+  def handle_packet(state, %Client.Status.Ping{payload: payload}) do
     write_packet(state, %Server.Status.Pong{payload: payload})
   end
 
   # Login
-  def handle_packet(%State{} = state, %Client.Login.LoginStart{name: name} = s) do
-    online_mode = Application.get_env(:mc_ex, :auth)[:offline]
+  def handle_packet(state, %Client.Login.LoginStart{name: name} = s) do
+    online_mode = Application.get_env(:mc_ex, :auth)[:online]
+    IO.inspect online_mode
 
     if online_mode do
       auth_init_data = {{pubkey, _}, token} = McEx.Net.Crypto.get_auth_init_data
       state = write_packet(state, %Server.Login.EncryptionRequest{server_id: "", public_key: pubkey, verify_token: token})
-      %State{state | name: name, user: {false, name, nil}, auth_init_data: auth_init_data}
+      State.handler_state(state, %{ State.handler_state(state) |
+        name: name,
+        user: {false, name, nil},
+        auth_init_data: auth_init_data,
+      })
     else
       uuid = McEx.UUID.from_hex(String.replace(UUID.uuid4, "-", ""))
-      state = %{state | user: {true, name, uuid}}
+      state = State.handler_state(state, %{ State.handler_state(state) |
+        user: {true, name, uuid}
+      })
       finish_login(state)
     end
   end
   def handle_packet(
-        %State{auth_init_data: {{pub_key, priv_key}, token}, name: name} = state, 
+        state, 
         %Client.Login.EncryptionResponse{shared_secret: encr_shared_secret, verify_token: encr_token}) do
+    
+    handler_state = State.handler_state(state)
+    %{
+      auth_init_data: {{pub_key, priv_key}, token},
+      name: name,
+    } = handler_state
 
     ^token = :public_key.decrypt_private(encr_token, priv_key)
     shared_secret = :public_key.decrypt_private(encr_shared_secret, priv_key)
     16 = byte_size(shared_secret)
 
-    state = state |> set_encr(%McEx.Net.Crypto.CryptData{key: shared_secret, ivec: shared_secret})
+    #state = state |> set_encr(%McEx.Net.Crypto.CryptData{key: shared_secret, ivec: shared_secret})
+    state = state
+    |> set_encr(%McProtocol.Crypto.Transport.CryptData{key: shared_secret, ivec: shared_secret})
 
-    verification_response = Crypto.verify_user_login(pub_key, shared_secret, name)
+    verification_response = McProtocol.Crypto.Login.verify_user_login(pub_key, shared_secret, name)
     ^name = verification_response.name
     uuid = McEx.UUID.from_hex(verification_response.id)
-    state = %{state | user: {true, name, uuid}}
+    state = State.handler_state(state, %{ handler_state |
+      user: {true, name, uuid},
+    })
 
     finish_login(state)
   end
 
   def finish_login(state) do
-    {true, name, uuid} = state.user
+    {true, name, uuid} = State.handler_state(state).user
 
-    state = state |> write_packet(%Server.Login.SetCompression{
-      threshold: 256})
-    state = state |> set_compression(256)
+    entity_id = McEx.EntityIdGenerator.get_id
 
-    state = state |> write_packet(%Server.Login.LoginSuccess{
-      username: name, 
-      uuid: uuid})
-
-    state = State.set_mode(state, :play)
-    state = %{state | entity_id: McEx.EntityIdGenerator.get_id}
-
-    state = state |> write_packet(%Server.Play.JoinGame{
-      entity_id: state.entity_id,
+    state = state 
+    |> write_packet(%Server.Login.SetCompression{threshold: 256})
+    |> set_compression(256)
+    |> write_packet(%Server.Login.LoginSuccess{username: name, uuid: uuid})
+    |> State.handler_state(
+      %{ State.handler_state(state) |
+        entity_id: entity_id,
+      }
+      |> HandlerState.set_mode(:play)
+    )
+    |> write_packet(%Server.Play.JoinGame{
+      entity_id: entity_id,
       gamemode: 0, #creative
       dimension: 0, #overworld
       difficulty: 0, #peaceful
@@ -75,20 +131,23 @@ defmodule McEx.Net.Handlers do
       reduced_debug_info: false})
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
-    {:ok, player_server} = McEx.Player.Supervisor.start_player({state.socket_manager, self, state.write}, state.user)
-    send(state.socket_manager, {:die_with, player_server})
-    state = %{state | player: player_server}
+    {:ok, player_server} = McEx.Player.Supervisor.start_player({state.controlling, state.read, state.write}, State.handler_state(state).user)
+    send(state.controlling, {:die_with, player_server})
+    state = State.handler_state(state, %{ State.handler_state(state) |
+      player: player_server,
+    })
 
+    state = state 
     #SpawnPosition
-    state = write_packet(state, %Server.Play.SpawnPosition{
+    |> write_packet(%Server.Play.SpawnPosition{
       location: {0, 100, 0}})
     #PlayerAbilities
-    state = write_packet(state, %Server.Play.PlayerAbilities{
+    |> write_packet(%Server.Play.PlayerAbilities{
       flags: <<0b11111111::8>>,
       flying_speed: 0.1,
       walking_speed: 0.2})
     #PlayerPositionLook
-    state = write_packet(state, %Server.Play.PlayerPositionLook{
+    |> write_packet(%Server.Play.PlayerPositionLook{
       x: 0,
       y: 100,
       z: 0,
@@ -100,16 +159,16 @@ defmodule McEx.Net.Handlers do
   end
 
   # Play
-  def handle_packet(%State{player: player} = state, %Client.Play.KeepAlive{} = msg) do
-    Player.client_event(player, {:keep_alive, msg.nonce})
+  def handle_packet(state, %Client.Play.KeepAlive{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:keep_alive, msg.nonce})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.ChatMessage{} = msg) do
-    Player.client_event(player, {:action_chat, msg.message})
+  def handle_packet(state, %Client.Play.ChatMessage{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:action_chat, msg.message})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.UseEntity{} = msg) do
-    Player.client_event(player, 
+  def handle_packet(state, %Client.Play.UseEntity{} = msg) do
+    Player.client_event(State.handler_state(state).player, 
       case msg.type do
         0 -> {:entity_interact, msg.target}
         1 -> {:entity_attack, msg.target}
@@ -117,25 +176,25 @@ defmodule McEx.Net.Handlers do
       end)
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerGround{} = msg) do
-    Player.client_event(player, {:set_on_ground, msg.on_ground})
+  def handle_packet(state, %Client.Play.PlayerGround{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_on_ground, msg.on_ground})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerPosition{} = msg) do
-    Player.client_event(player, {:set_pos, {:pos, msg.x, msg.y, msg.z}, msg.on_ground})
+  def handle_packet(state, %Client.Play.PlayerPosition{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_pos, {:pos, msg.x, msg.y, msg.z}, msg.on_ground})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerLook{} = msg) do
-    Player.client_event(player, {:set_look, {:look, msg.yaw, msg.pitch}, msg.on_ground})
+  def handle_packet(state, %Client.Play.PlayerLook{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_look, {:look, msg.yaw, msg.pitch}, msg.on_ground})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerPositionLook{} = msg) do
-    Player.client_event(player, {:set_pos_look, {:pos, msg.x, msg.y, msg.z}, {:look, msg.yaw, msg.pitch}, msg.on_ground})
+  def handle_packet(state, %Client.Play.PlayerPositionLook{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_pos_look, {:pos, msg.x, msg.y, msg.z}, {:look, msg.yaw, msg.pitch}, msg.on_ground})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerDigging{} = msg) do
-    Player.client_event(player,
+  def handle_packet(state, %Client.Play.PlayerDigging{} = msg) do
+    Player.client_event(State.handler_state(state).player,
       case msg.status do
         0 -> {:action_digging, :started, msg.location, msg.face}
         1 -> {:action_digging, :cancelled, msg.location, msg.face}
@@ -147,30 +206,30 @@ defmodule McEx.Net.Handlers do
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerBlockPlacement{location: {:pos, -1, 255, -1}, face: -1}) do
+  def handle_packet(state, %Client.Play.PlayerBlockPlacement{location: {:pos, -1, 255, -1}, face: -1}) do
     # WTF special case :/
     # TODO: Figure this out
-    Player.client_event(player, {:item_state_update})
+    Player.client_event(State.handler_state(state).player, {:item_state_update})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerBlockPlacement{} = msg) do
-    Player.client_event(player, {:action_place_block, msg.location, msg.face, msg.held_item, 
+  def handle_packet(state, %Client.Play.PlayerBlockPlacement{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:action_place_block, msg.location, msg.face, msg.held_item, 
       {msg.cursor_x, msg.cursor_y, msg.cursor_z}})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.HeldItemChange{} = msg) do
-    Player.client_event(player, {:set_held_item, msg.slot})
+  def handle_packet(state, %Client.Play.HeldItemChange{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_held_item, msg.slot})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.Animation{}) do
-    Player.client_event(player, {:action_punch_animation})
+  def handle_packet(state, %Client.Play.Animation{}) do
+    Player.client_event(State.handler_state(state).player, {:action_punch_animation})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.EntityAction{} = msg) do
-    Player.client_event(player,
+  def handle_packet(state, %Client.Play.EntityAction{} = msg) do
+    Player.client_event(State.handler_state(state).player,
       case msg.action_id do
         0 -> {:player_set_crouch, msg.entity_id, true}
         1 -> {:player_set_crouch, msg.entity_id, false}
@@ -183,53 +242,53 @@ defmodule McEx.Net.Handlers do
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.SteerVehicle{} = msg) do
-    Player.client_event(player, {:set_vehicle_steer, msg.sideways, msg.forward}) #TODO: Flags
+  def handle_packet(state, %Client.Play.SteerVehicle{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_vehicle_steer, msg.sideways, msg.forward}) #TODO: Flags
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.CloseWindow{} = msg) do
-    Player.client_event(player, {:window_close, msg.window_id})
+  def handle_packet(state, %Client.Play.CloseWindow{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:window_close, msg.window_id})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.ClickWindow{}) do
+  def handle_packet(state, %Client.Play.ClickWindow{}) do
     # TODO: Handle the complex matrix of click operations :(
     # http://wiki.vg/Protocol#Click_Window
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.ConfirmTransaction{}) do
+  def handle_packet(state, %Client.Play.ConfirmTransaction{}) do
     # TODO: Figure out if I should do something here
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.CreativeInventoryAction{} = msg) do
-    Player.client_event(player, {:window_creative_set_slot, msg.slot, msg.item})
+  def handle_packet(state, %Client.Play.CreativeInventoryAction{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:window_creative_set_slot, msg.slot, msg.item})
     state
   end
-  def handle_packet(%State{player: player} = state, %Client.Play.EnchantItem{} = msg) do
-    Player.client_event(player, {:window_enchant_item, msg.window_id, msg.enchantment})
-    state
-  end
-
-  def handle_packet(%State{player: player} = state, %Client.Play.UpdateSign{} = msg) do
-    Player.client_event(player, {:action_update_sign, msg.location, {msg.line_1, msg.line_2, msg.line_3, msg.line_4}})
+  def handle_packet(state, %Client.Play.EnchantItem{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:window_enchant_item, msg.window_id, msg.enchantment})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.PlayerAbilities{} = msg) do
+  def handle_packet(state, %Client.Play.UpdateSign{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:action_update_sign, msg.location, {msg.line_1, msg.line_2, msg.line_3, msg.line_4}})
+    state
+  end
+
+  def handle_packet(state, %Client.Play.PlayerAbilities{} = msg) do
     <<_::6, is_flying::1, _::1>> = msg.flags
-    Player.client_event(player, {:set_flying, is_flying == 1})
+    Player.client_event(State.handler_state(state).player, {:set_flying, is_flying == 1})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.TabComplete{} = msg) do
-    Player.client_event(player, {:action_chat_tab_complete, msg.text, msg.block_look})
+  def handle_packet(state, %Client.Play.TabComplete{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:action_chat_tab_complete, msg.text, msg.block_look})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.ClientSettings{} = msg) do
+  def handle_packet(state, %Client.Play.ClientSettings{} = msg) do
     <<cape::1, jacket::1, left_sleeve::1, right_sleeve::1, left_pants::1, right_pants::1, hat::1, _::1>> = msg.skin_parts
 
-    Player.client_events(player, [
+    Player.client_events(State.handler_state(state).player, [
       {:set_locale, msg.locale},
       {:set_view_distance, msg.view_distance},
       {:set_chat_mode, case msg.chat_mode do
@@ -249,8 +308,8 @@ defmodule McEx.Net.Handlers do
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.ClientStatus{} = msg) do
-    Player.client_event(player, 
+  def handle_packet(state, %Client.Play.ClientStatus{} = msg) do
+    Player.client_event(State.handler_state(state).player, 
       case msg.action_id do
         0 -> {:action_respawn}
         1 -> {:stats_request}
@@ -259,18 +318,18 @@ defmodule McEx.Net.Handlers do
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.PluginMessage{} = msg) do
-    Player.client_event(player, {:plugin_message, msg.channel, msg.data})
+  def handle_packet(state, %Client.Play.PluginMessage{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:plugin_message, msg.channel, msg.data})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.Spectate{} = msg) do
-    Player.client_event(player, {:set_spectate, msg.target_player})
+  def handle_packet(state, %Client.Play.Spectate{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:set_spectate, msg.target_player})
     state
   end
 
-  def handle_packet(%State{player: player} = state, %Client.Play.ResourcePackStatus{} = msg) do
-    Player.client_event(player, {:action_resource_pack_status, msg.hash, msg.result})
+  def handle_packet(state, %Client.Play.ResourcePackStatus{} = msg) do
+    Player.client_event(State.handler_state(state).player, {:action_resource_pack_status, msg.hash, msg.result})
     state
   end
 end

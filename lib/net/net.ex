@@ -4,6 +4,8 @@ defmodule McEx.Net do
 
   alias McEx.Net.ConnectionManager
 
+  @tcp_listen_options [:binary, packet: :raw, active: false, reuseaddr: true]
+
   def start_link do
     Supervisor.start_link(__MODULE__, :ok)
   end
@@ -21,15 +23,15 @@ defmodule McEx.Net do
   end
 
   def accept(port) do
-    {:ok, listen} = :gen_tcp.listen(port, [:binary, packet: :raw, active: false, reuseaddr: true])
+    {:ok, listen} = :gen_tcp.listen(port, @tcp_listen_options)
     Logger.info("Listening on port #{port}")
     accept_loop(listen)
   end
 
   defp accept_loop(listen) do
-    {:ok, client} = :gen_tcp.accept(listen)
-    {:ok, pid} = ConnectionManager.serve(ConnectionManager, client)
-    :ok = :gen_tcp.controlling_process(client, pid)
+    {:ok, socket} = :gen_tcp.accept(listen)
+    {:ok, pid} = ConnectionManager.serve(ConnectionManager, socket)
+    :ok = :gen_tcp.controlling_process(socket, pid)
     accept_loop(listen)
   end
 end
