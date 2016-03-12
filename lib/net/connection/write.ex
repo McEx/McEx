@@ -10,6 +10,12 @@ defmodule McEx.Net.ConnectionNew.Write do
   def start_link(socket) do
     GenServer.start_link(__MODULE__, {socket})
   end
+  def write_struct(pid, packet_struct) do
+    GenServer.cast(pid, {:write_struct, packet_struct})
+  end
+  def write_raw(pid, raw) do
+    GenServer.cast(pid, {:write_raw, raw})
+  end
 
   def init({socket}) do
     state = %State{
@@ -21,15 +27,18 @@ defmodule McEx.Net.ConnectionNew.Write do
 
   # Blocking, for things like the kick packet when we want to close the TCP
   # socket right after the packet is sent.
-  def handle_call({:write_struct, struct}, state) do
+  def handle_call({:write_struct, struct}, _from, state) do
     state = write_struct(struct, state)
     {:reply, :ok, state}
   end
 
   # Nonblocking, for normal packets
-  # TODO: Change to cast
-  def handle_info({:write_struct, struct}, state) do
-    state = write_struct(struct, state)
+  def handle_cast({:write_struct, struct}, state) do
+    state = write_struct_socket(struct, state)
+    {:noreply, state}
+  end
+  def handle_cast({:write_raw, raw}, state) do
+    state = write_data_socket(raw, state)
     {:noreply, state}
   end
 
@@ -52,13 +61,17 @@ defmodule McEx.Net.ConnectionNew.Write do
     }
   end
 
-  def write_struct(struct, state) do
+  def write_struct_socket(struct, state) do
     packet_data = try do
       Server.write_packet(struct)
     rescue
       error -> handle_write_error(error, struct, state)
     end
 
+    write_data_socket(packet_data, state)
+  end
+
+  def write_data_socket(packet_data, state) do
     write_state = state.write_state
     {out_data, write_state} = McProtocol.Transport.Write.process(packet_data, write_state)
     state = %{ state | write_state: write_state }
@@ -76,16 +89,6 @@ defmodule McEx.Net.ConnectionNew.Write do
       :ok -> nil
       _ -> raise ClosedError
     end
-  end
-
-  def deflate(data) do
-    # TODO: Reuse zstream
-    z = :zlib.open
-    :zlib.deflateInit(z)
-    compr = :zlib.deflate(z, data, :finish)
-    :zlib.deflateEnd(z)
-    :zlib.close(z)
-    compr
   end
 
   def handle_write_error(error, struct, state) do

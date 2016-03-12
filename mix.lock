@@ -1,8 +1,8 @@
-%{"cutkey": {:git, "git://github.com/imtal/cutkey.git", "67375ea3d2ee3c729bc9a93baca447203930fd12", []},
-  "gpb": {:git, "git://github.com/tomas-abrahamsson/gpb.git", "139dec806d8e3313b66d529743201d07d8d226c2", []},
+%{"cutkey": {:git, "https://github.com/imtal/cutkey.git", "67375ea3d2ee3c729bc9a93baca447203930fd12", []},
+  "gpb": {:git, "https://github.com/tomas-abrahamsson/gpb.git", "139dec806d8e3313b66d529743201d07d8d226c2", []},
   "gproc": {:hex, :gproc, "0.5.0"},
   "hexate": {:hex, :hexate, "0.5.1"},
   "httpotion": {:hex, :httpotion, "2.1.0"},
-  "ibrowse": {:git, "git://github.com/cmullaparthi/ibrowse.git", "5ee4a806611fcf25cc74155871571e9983a0d0fc", []},
+  "ibrowse": {:git, "https://github.com/cmullaparthi/ibrowse.git", "5ee4a806611fcf25cc74155871571e9983a0d0fc", []},
   "poison": {:hex, :poison, "1.4.0"},
   "uuid": {:hex, :uuid, "1.1.3"}}

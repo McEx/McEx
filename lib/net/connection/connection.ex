@@ -9,7 +9,7 @@ defmodule McEx.Net.ConnectionNew do
     def handler_state(state, handler_state), do: %{ state | handler_state: handler_state }
 
     def write_packet(state, packet) do
-      send state.write, {:write_struct, packet}
+      McEx.Net.ConnectionNew.Write.write_struct(state.write, packet)
     end
 
     def set_encr(state, encr = %McProtocol.Crypto.Transport.CryptData{}) do
@@ -26,8 +26,8 @@ defmodule McEx.Net.ConnectionNew do
     end
   end
 
-  def start_link(socket) do
-    GenServer.start_link(__MODULE__, {socket})
+  def start_link(socket, handler) do
+    GenServer.start_link(__MODULE__, {socket, handler})
   end
 
   def init({socket}) do

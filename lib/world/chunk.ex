@@ -71,7 +71,8 @@ defmodule McEx.Chunk do
   end
 
   def handle_cast({:send_chunk, writer}, state) do
-    Write.write_packet(writer, write_chunk_packet(state))
+    #Write.write_packet(writer, write_chunk_packet(state))
+    McEx.Net.ConnectionNew.Write.write_struct(writer, write_chunk_packet(state))
     {:noreply, state}
   end
   def handle_cast(:stop_chunk, state) do

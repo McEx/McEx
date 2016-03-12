@@ -35,7 +35,7 @@ defmodule McEx.Player.World do
       else
         McEx.Chunk.Manager.release_chunk(manager, element, self)
         {:chunk, x, z} = element
-        Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.ChunkData{
+        McEx.Net.ConnectionNew.Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.ChunkData{
           chunk_x: x,
           chunk_z: z,
           continuous: true,
