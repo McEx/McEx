@@ -8,7 +8,7 @@
 extern crate rustler;
 use rustler::{NifTerm, NifEnv, NifError, NifResult};
 use rustler::{ NifEncoder, NifDecoder };
-use rustler::resource::ResourceTypeHolder;
+use rustler::resource::ResourceCell;
 use rustler::binary::{OwnedNifBinary, NifBinary};
 
 //mod chunk_data;
@@ -32,7 +32,7 @@ fn on_load(env: &NifEnv, load_info: NifTerm) -> bool {
 }
 
 fn create<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
-    let holder = ResourceTypeHolder::new(env, Chunk::default());
+    let holder = ResourceCell::new(Chunk::default());
     holder.write().unwrap().set_block(0, 100, 0, BlockData::new(1, 1));
     Ok(holder.encode(env))
 }
@@ -42,7 +42,7 @@ extern crate time;
 #[NifTuple] struct PacketAssemblyParams { skylight: bool, entire_chunk: bool, bitmask: u32 }
 #[NifTuple] struct PacketAssemblyResponse<'a> { written_bitmask: u32, size: u32, chunk_data: NifTerm<'a> }
 fn assemble_packet<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
-    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0]));
+    let holder: ResourceCell<Chunk> = try!(NifDecoder::decode(args[0]));
     let params: PacketAssemblyParams = try!(NifDecoder::decode(args[1]));
 
     let mut_chunk = holder.write().unwrap();
@@ -63,7 +63,7 @@ extern crate voxel_worldgen;
 fn generate_chunk<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
     let start_time = time::precise_time_ns();
 
-    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0]));
+    let holder: ResourceCell<Chunk> = try!(NifDecoder::decode(args[0]));
     let chunk_pos: ChunkPos = try!(NifDecoder::decode(args[1]));
 
     let mut mut_chunk = holder.write().unwrap();
@@ -107,7 +107,7 @@ fn generate_chunk<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a
 }
 
 fn destroy_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
-    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0]));
+    let holder: ResourceCell<Chunk> = try!(NifDecoder::decode(args[0]));
     let pos: NifBlockPos = try!(NifDecoder::decode(args[1]));
 
     let mut mut_chunk = holder.write().unwrap();
@@ -119,7 +119,7 @@ fn destroy_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>
 #[NifTuple] struct NifBlockPos { x: u16, y: u16, z: u16 }
 #[NifTuple] struct NifBlockData { id: u16, meta: u8 }
 fn set_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> NifResult<NifTerm<'a>> {
-    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0]));
+    let holder: ResourceCell<Chunk> = try!(NifDecoder::decode(args[0]));
 
     let pos: NifBlockPos = try!(NifDecoder::decode(args[1]));
     let data: NifBlockData = try!(NifDecoder::decode(args[2]));
@@ -133,7 +133,7 @@ fn set_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> NifResult<NifTerm<'a>>
 
 /*#[NifTuple] struct NifBlockPos { x: u32, y: u32, z: u32 }
 fn set_block<'a>(env: &'a NifEnv, args: &Vec<NifTerm>) -> Result<NifTerm<'a>, NifError> {
-    let holder: ResourceTypeHolder<Chunk> = try!(NifDecoder::decode(args[0], env));
+    let holder: ResourceCell<Chunk> = try!(NifDecoder::decode(args[0], env));
     let pos: NifBlockPos = try!(NifDecoder::decode(args[1], env));
     let val: u32 = try!(NifDecoder::decode(args[2], env));
 
