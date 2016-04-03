@@ -4,6 +4,8 @@ defmodule McEx.Player.ClientEvent do
   end
   def bcast_players_sev(world_id, msg), do: bcast_players(world_id, {:server_event, msg})
 
+  def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}), do: {:rel_pos, x-x0, y-y0, z-z0}
+
   def handle({:set_pos, pos, on_ground}, state) do
     delta_pos = calc_delta_pos(pos, state.position)
     bcast_players_sev(state.world_id, {:entity_move, state.eid, pos, delta_pos, on_ground})
@@ -24,8 +26,6 @@ defmodule McEx.Player.ClientEvent do
       on_ground: on_ground}
     |> McEx.Player.World.load_chunks
   end
-
-  def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}), do: {:rel_pos, x-x0, y-y0, z-z0}
 
   def handle({:set_look, look, on_ground}, state) do
     bcast_players_sev(state.world_id, {:entity_look, state.eid, look, on_ground})

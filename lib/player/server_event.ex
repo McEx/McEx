@@ -14,8 +14,11 @@ defmodule McEx.Player.ServerEvent do
     state
   end
 
-  def handle(:m, {:entity_move, eid, _pos, {:rel_pos, dx, dy, dz}, on_ground}, state) do
+  def delta_pos_to_short({:rel_pos, dx, dy, dz}), do: {:rel_pos_short, round(dx*32), round(dy*32), round(dz*32)}
+
+  def handle(:m, {:entity_move, eid, _pos, rel_pos, on_ground}, state) do
     if eid != state.eid do
+      {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(rel_pos)
       write_packet(state, %Packet.Server.Play.EntityMove{
         entity_id: eid,
         d_x: dx,
@@ -26,8 +29,9 @@ defmodule McEx.Player.ServerEvent do
     end
     state
   end
-  def handle(:m, {:entity_move_look, eid, _pos, {:rel_pos, dx, dy, dz}, {:look, yaw, pitch}, on_ground}, state) do
+  def handle(:m, {:entity_move_look, eid, _pos, rel_pos, {:look, yaw, pitch}, on_ground}, state) do
     if eid != state.eid do
+      {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(rel_pos)
       write_packet(state, %Packet.Server.Play.EntityMoveLook{
         entity_id: eid,
         d_x: dx,
@@ -85,7 +89,7 @@ defmodule McEx.Player.ServerEvent do
   def handle(:m, {:TEMP_set_crouch, eid, status}, state) do
     write_packet(state, %Packet.Server.Play.EntityMetadata{
       entity_id: eid,
-      metadata: [McEx.EntityMeta.Entity.status({false, status, false, false, false})]})
+      metadata: [McProtocol.EntityMeta.Entity.status({false, status, false, false, false})]})
     state
   end
 

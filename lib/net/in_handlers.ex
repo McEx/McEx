@@ -205,7 +205,7 @@ defmodule McEx.Net.Handlers do
   end
 
   def handle_packet(state, %Client.Play.TabComplete{} = msg) do
-    Player.client_event(state.player, {:action_chat_tab_complete, msg.text, msg.block_look})
+    Player.client_event(state.player, {:action_chat_tab_complete, msg.text, msg.block})
     {[], state}
   end
 

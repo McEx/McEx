@@ -2,7 +2,6 @@ defmodule McEx.Player do
   use GenServer
   use McEx.Util
   require Logger
-  alias McEx.Net.Connection.Write
   alias McProtocol.Packet
 
   defmodule PlayerLook, do: defstruct(yaw: 0, pitch: 0)
@@ -132,10 +131,12 @@ defmodule McEx.Player do
   end
 
   def handle_info({:block, :destroy, pos}, state) do
-    Write.write_packet(state.connection.write, %Packet.Server.Play.BlockChange{
-      location: pos,
-      type: 0,
-    })
+    McProtocol.Acceptor.ProtocolState.Connection.write_packet(
+      state.connection,
+      %Packet.Server.Play.BlockChange{
+        location: pos,
+        type: 0,
+      })
     {:noreply, state}
   end
 end
