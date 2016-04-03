@@ -3,6 +3,7 @@ defmodule McEx.Player do
   use McEx.Util
   require Logger
   alias McEx.Net.Connection.Write
+  alias McProtocol.Packet
 
   defmodule PlayerLook, do: defstruct(yaw: 0, pitch: 0)
 
@@ -32,8 +33,6 @@ defmodule McEx.Player do
         name: nil,
         uuid: nil,
         connection: nil,
-        reader: nil,
-        writer: nil,
         position: {:pos, 0, 100, 0},
         look: %PlayerLook{},
         on_ground: true,
@@ -48,8 +47,8 @@ defmodule McEx.Player do
     defstruct(name: nil, uuid: nil)
   end
 
-  def start_link(conn, {true, name, uuid}, opts \\ []) do
-    GenServer.start_link(__MODULE__, {conn, {name, uuid}}, opts)
+  def start_link(conn, {true, name, uuid}, entity_id, opts \\ []) do
+    GenServer.start_link(__MODULE__, {conn, {name, uuid}, entity_id}, opts)
   end
 
   def client_events(_, []), do: nil
@@ -73,9 +72,9 @@ defmodule McEx.Player do
     }
   end
 
-  def init({{connection, reader, writer}, {name, uuid}}) do
-    Logger.info("User #{name} joined with uuid #{McEx.UUID.hex uuid}")
-    Process.monitor(connection)
+  def init({connection, {name, uuid}, entity_id}) do
+    Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid} (eid: #{entity_id})")
+    Process.monitor(connection.control)
 
     world_id = :test
     world_pid = McEx.World.Manager.get_world(world_id)
@@ -84,9 +83,7 @@ defmodule McEx.Player do
 
     state = %PlayerState{
       connection: connection,
-      reader: reader,
-      writer: writer,
-      eid: GenServer.call(McEx.EntityIdGenerator, :gen_id),
+      eid: entity_id,
       name: name,
       uuid: uuid,
       world_id: world_id,
@@ -135,9 +132,9 @@ defmodule McEx.Player do
   end
 
   def handle_info({:block, :destroy, pos}, state) do
-    Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.BlockChange{
+    Write.write_packet(state.connection.write, %Packet.Server.Play.BlockChange{
       location: pos,
-      block_id: 0,
+      type: 0,
     })
     {:noreply, state}
   end

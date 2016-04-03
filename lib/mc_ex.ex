@@ -17,6 +17,7 @@ defmodule McEx.Supervisor do
   def init(:ok) do
     children = [
       worker(McEx.EntityIdGenerator, [[name: @entity_id_gen_name]]),
+      worker(McProtocol.Crypto.ServerKeyProvider, [[name: McEx.ServerKeyProvider]]),
       supervisor(McEx.World.Supervisor, []),
       supervisor(McEx.Player.Supervisor, []),
       supervisor(McEx.Net, [])

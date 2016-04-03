@@ -23,7 +23,7 @@ end
 defmodule McEx.Chunk do
   use GenServer
   alias McEx.Net.Connection.Write
-  alias McEx.Net.Packets.Server
+  alias McProtocol.Packet.Server
 
   use Bitwise
 
@@ -57,22 +57,24 @@ defmodule McEx.Chunk do
   end
 
   def write_chunk_packet(state) do
-    alias McEx.DataTypes.Encode
+    alias McProtocol.DataTypes.Encode
 
-    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource, {true, true, 0})
+    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource,
+                                                                   {true, true, 0})
 
     {:chunk, x, z} = state.pos
-    %McEx.Net.Packets.Server.Play.ChunkData{
-      chunk_x: x, 
-      chunk_z: z, 
-      continuous: true, 
-      section_mask: written_mask, 
-      chunk_data: Encode.varint(size) <> data}
+    %Server.Play.MapChunk{
+      x: x,
+      z: z,
+      ground_up: true,
+      bit_map: written_mask,
+      chunk_data: data,
+    }
   end
 
-  def handle_cast({:send_chunk, writer}, state) do
+  def handle_cast({:send_chunk, conn}, state) do
     #Write.write_packet(writer, write_chunk_packet(state))
-    McEx.Net.ConnectionNew.Write.write_struct(writer, write_chunk_packet(state))
+    McProtocol.Acceptor.ProtocolState.Connection.write_packet(conn, write_chunk_packet(state))
     {:noreply, state}
   end
   def handle_cast(:stop_chunk, state) do

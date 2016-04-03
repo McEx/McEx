@@ -30,13 +30,15 @@ defmodule McEx.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:gpb, github: "tomas-abrahamsson/gpb"},
-     {:poison, "~> 1.4.0"},
+     {:poison, "~> 2.0.0"},
      {:cutkey, github: "imtal/cutkey"},
      {:ibrowse, github: "cmullaparthi/ibrowse"},
      {:httpotion, "~> 2.1.0"},
      {:gproc, "~> 0.5.0"},
      {:uuid, "~> 1.1"},
-     {:mc_protocol, path: "../elixir_mc_protocol"}]
+     {:mc_protocol, "~> 0.0.2"}]
+     #{:mc_protocol, path: "../elixir_mc_protocol"}]
+    
   end
 end
 

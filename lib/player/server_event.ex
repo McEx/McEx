@@ -1,9 +1,9 @@
 defmodule McEx.Player.ServerEvent do
-  alias McEx.Net.Packets
+  alias McProtocol.Packet
   use McEx.Util
 
   def write_packet(state, struct) do
-    McEx.Net.ConnectionNew.Write.write_struct(state.writer, struct)
+    McProtocol.Acceptor.ProtocolState.Connection.write_packet(state.connection, struct)
     state
   end
 
@@ -16,11 +16,11 @@ defmodule McEx.Player.ServerEvent do
 
   def handle(:m, {:entity_move, eid, _pos, {:rel_pos, dx, dy, dz}, on_ground}, state) do
     if eid != state.eid do
-      write_packet(state, %McEx.Net.Packets.Server.Play.EntityRelativeMove{
+      write_packet(state, %Packet.Server.Play.EntityMove{
         entity_id: eid,
-        delta_x: dx,
-        delta_y: dy,
-        delta_z: dz,
+        d_x: dx,
+        d_y: dy,
+        d_z: dz,
         on_ground: on_ground,
       })
     end
@@ -28,16 +28,16 @@ defmodule McEx.Player.ServerEvent do
   end
   def handle(:m, {:entity_move_look, eid, _pos, {:rel_pos, dx, dy, dz}, {:look, yaw, pitch}, on_ground}, state) do
     if eid != state.eid do
-      write_packet(state, %McEx.Net.Packets.Server.Play.EntityLookRelativeMove{
+      write_packet(state, %Packet.Server.Play.EntityMoveLook{
         entity_id: eid,
-        delta_x: dx,
-        delta_y: dy,
-        delta_z: dz,
+        d_x: dx,
+        d_y: dy,
+        d_z: dz,
         yaw: deg_to_byte(yaw),
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
       })
-      write_packet(state, %McEx.Net.Packets.Server.Play.EntityHeadLook{
+      write_packet(state, %Packet.Server.Play.EntityHeadRotation{
         entity_id: eid,
         head_yaw: deg_to_byte(yaw),
       })
@@ -46,13 +46,13 @@ defmodule McEx.Player.ServerEvent do
   end
   def handle(:m, {:entity_look, eid, {:look, yaw, pitch}, on_ground}, state) do
     if eid != state.eid do
-      write_packet(state, %McEx.Net.Packets.Server.Play.EntityLook{
+      write_packet(state, %Packet.Server.Play.EntityLook{
         entity_id: eid,
         yaw: deg_to_byte(yaw),
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
       })
-      write_packet(state, %McEx.Net.Packets.Server.Play.EntityHeadLook{
+      write_packet(state, %Packet.Server.Play.EntityHeadRotation{
         entity_id: eid,
         head_yaw: deg_to_byte(yaw),
       })
@@ -63,12 +63,13 @@ defmodule McEx.Player.ServerEvent do
   @doc "Other part in Player.ClientEvent.handle({:keep_alive"
   def handle(:m, {:keep_alive_send, nonce, max_skipped}, state) do
     case state.keepalive_state do
-      nil -> 
-        write_packet(state, %McEx.Net.Packets.Server.Play.KeepAlive{nonce: nonce})
-        put_in(state.keepalive_state, {nonce, 0})
+      nil ->
+        write_packet(state, %Packet.Server.Play.KeepAlive{keep_alive_id: nonce})
+        state = put_in(state.keepalive_state, {nonce, 0})
+        state
       {sent_nonce, skipped} ->
         if skipped > max_skipped do
-          write_packet(state, %Packets.Server.Play.Disconnect{reason: %{text: "Timeout"}})
+          write_packet(state, %Packet.Server.Play.KickDisconnect{reason: %{text: "Timeout"}})
           {:stop, :timeout, state}
         else
           put_in(state.keepalive_state, {sent_nonce, skipped + 1})
@@ -77,12 +78,12 @@ defmodule McEx.Player.ServerEvent do
   end
 
   def handle(:m, {:kick, reason}, state) do
-    write_packet(state, %Packets.Server.Play.Disconnect{reason: %{text: reason}})
+    write_packet(state, %Packet.Server.Play.KickDisconnect{reason: %{text: reason}})
     state
   end
 
   def handle(:m, {:TEMP_set_crouch, eid, status}, state) do
-    write_packet(state, %Packets.Server.Play.EntityMetadata{
+    write_packet(state, %Packet.Server.Play.EntityMetadata{
       entity_id: eid,
       metadata: [McEx.EntityMeta.Entity.status({false, status, false, false, false})]})
     state
@@ -97,7 +98,6 @@ defmodule McEx.Player.ServerEvent do
       %{
         uuid: player.uuid,
         name: player.name,
-        property_num: 0,
         properties: [],
         gamemode: player.gamemode,
         ping: player.ping,
@@ -105,14 +105,14 @@ defmodule McEx.Player.ServerEvent do
         display_name: nil
       }
     end
-    write_packet(state, %McEx.Net.Packets.Server.Play.PlayerListItem{
+    write_packet(state, %Packet.Server.Play.PlayerInfo{
       action: 0,
-      element_num: Enum.count(players_add),
-      players_add: players_add
+      #element_num: Enum.count(players_add),
+      data: players_add
     })
     for player <- players do
       if player.player_pid != self do
-        write_packet(state, %McEx.Net.Packets.Server.Play.SpawnPlayer{
+        write_packet(state, %Packet.Server.Play.NamedEntitySpawn{
           entity_id: player.eid,
           player_uuid: player.uuid,
           x: 0, y: 260, z: 0,
@@ -128,10 +128,10 @@ defmodule McEx.Player.ServerEvent do
     player_leave = for player <- players do
       %{uuid: player.uuid}
     end
-    write_packet(state, %McEx.Net.Packets.Server.Play.PlayerListItem{
+    write_packet(state, %Packet.Server.Play.PlayerInfo{
       action: 4,
-      element_num: Enum.count(player_leave),
-      players_remove: player_leave
+      #element_num: Enum.count(player_leave),
+      data: player_leave
     })
     :ok
   end

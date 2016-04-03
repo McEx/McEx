@@ -3,6 +3,7 @@ defmodule McEx.Player.World do
   alias McEx.Player.PlayerState
   alias McEx.Player.ClientSettings
   alias McEx.Net.Connection.Write
+  alias McProtocol.Packet
   use McEx.Util
 
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do
@@ -25,7 +26,7 @@ defmodule McEx.Player.World do
       else
         McEx.Chunk.Manager.lock_chunk(manager, element, self)
         {:ok, chunk} = McEx.Chunk.Manager.get_chunk(manager, element)
-        McEx.Chunk.send_chunk(chunk, state.writer)
+        McEx.Chunk.send_chunk(chunk, state.connection)
         Set.put(loaded, element)
       end
     end)
@@ -35,12 +36,16 @@ defmodule McEx.Player.World do
       else
         McEx.Chunk.Manager.release_chunk(manager, element, self)
         {:chunk, x, z} = element
-        McEx.Net.ConnectionNew.Write.write_packet(state.writer, %McEx.Net.Packets.Server.Play.ChunkData{
-          chunk_x: x,
-          chunk_z: z,
-          continuous: true,
-          section_mask: 0,
-          chunk_data: <<0::8>>})
+
+        chunk_packet = %Packet.Server.Play.MapChunk{
+          x: x,
+          z: z,
+          ground_up: true,
+          bit_map: 0,
+          chunk_data: <<0::8>>
+        }
+        McProtocol.Acceptor.ProtocolState.Connection.write_packet(state.connection, chunk_packet)
+
         false
       end
     end), HashSet.new)

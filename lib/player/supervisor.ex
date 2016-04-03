@@ -5,8 +5,8 @@ defmodule McEx.Player.Supervisor do
     Supervisor.start_link(__MODULE__, :ok, [name: McEx.Player.Supervisor])
   end
 
-  def start_player(connection, player) do
-    Supervisor.start_child(McEx.Player.Supervisor, [connection, player])
+  def start_player(connection, player, entity_id) do
+    Supervisor.start_child(McEx.Player.Supervisor, [connection, player, entity_id])
   end
 
   def init(:ok) do

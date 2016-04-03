@@ -7,7 +7,7 @@ defmodule McEx.Net.Connection.Supervisor do
 
   def serve_socket(supervisor, socket) do
     #Supervisor.start_child(supervisor, [fn -> McEx.Net.Connection.start_serve(socket) end])
-    Supervisor.start_child(supervisor, [socket, McProtocol.Handler.Login])
+    Supervisor.start_child(supervisor, [socket, :Client, McEx.Net.LegacyProtocolHandler])
   end
 
   def init(:ok) do
@@ -19,12 +19,5 @@ defmodule McEx.Net.Connection.Supervisor do
       strategy: :simple_one_for_one,
     ]
     supervise(children, opts)
-  end
-end
-
-defmodule ClosedError do
-  defexception []
-  def message(e) do
-    "Connection closed"
   end
 end
