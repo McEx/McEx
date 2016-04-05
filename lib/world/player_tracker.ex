@@ -10,16 +10,16 @@ defmodule McEx.World.PlayerTracker do
   end
 
   def for_world(world_id) do
-    McEx.Topic.get_world_player_tracker_pid(world_id)
+    McEx.Registry.world_service_pid(world_id, :world_player_tracker)
   end
 
   def player_join(world_id, %PlayerListRecord{} = record) do
     GenServer.call(for_world(world_id), {:player_join, %{record | player_pid: self}})
-    McEx.Topic.reg_world_player(world_id)
+    McEx.Registry.reg_world_player(world_id)
   end
 
   def player_leave(world_id) do
-    McEx.Topic.unreg_world_player(world_id)
+    McEx.Registry.unreg_world_player(world_id)
     GenServer.call(for_world(world_id), {:player_leave, self})
   end
 
@@ -27,7 +27,7 @@ defmodule McEx.World.PlayerTracker do
   use GenServer
 
   def init(world_id) do
-    McEx.Topic.reg_world_player_tracker(world_id)
+    McEx.Registry.reg_world_service(world_id, :world_player_tracker)
     {:ok, %{
         world_id: world_id,
         players: []
@@ -54,7 +54,7 @@ defmodule McEx.World.PlayerTracker do
     record = %{record | mon_ref: mon_ref}
 
     message = {:server_event, {:player_list, :join, [record]}}
-    McEx.Topic.send_world_player(state.world_id, message)
+    McEx.Registry.world_players_send(state.world_id, message)
 
     state = update_in state.players, &([record | &1])
     send(record.player_pid, {:server_event, {:player_list, :join, state.players}})
@@ -65,7 +65,7 @@ defmodule McEx.World.PlayerTracker do
     :erlang.demonitor(record.mon_ref)
 
     message = {:server_event, {:player_list, :leave, [record]}}
-    McEx.Topic.send_world_player(state.world_id, message)
+    McEx.Registry.world_players_send(state.world_id, message)
 
     update_in state.players, &(Enum.filter(&1, fn(rec) -> rec != record end))
   end

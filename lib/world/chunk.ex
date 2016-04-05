@@ -1,25 +1,3 @@
-
-defmodule McEx.Chunk.ChunkSupervisor do
-  use Supervisor
-
-  def start_link do
-    Supervisor.start_link(__MODULE__, :ok, [name: McEx.Chunk.Supervisor])
-  end
-
-  def start_chunk(world_id, pos) do
-    Supervisor.start_child(McEx.Chunk.Supervisor, [world_id, pos])
-  end
-
-  def init(:ok) do
-    children = [
-      worker(McEx.Chunk, [], restart: :transient)
-    ]
-
-    opts = [strategy: :simple_one_for_one]
-    supervise(children, opts)
-  end
-end
-
 defmodule McEx.Chunk do
   use GenServer
   alias McEx.Net.Connection.Write
@@ -41,7 +19,7 @@ defmodule McEx.Chunk do
   def init({world_id, pos}) do
     chunk = McEx.Native.Chunk.create
     {:chunk, x, z} = pos
-    McEx.Topic.reg_world_chunk(world_id, pos)
+    McEx.Registry.reg_chunk_server(world_id, pos)
     McEx.Native.Chunk.generate_chunk(chunk, {x, z})
     {:ok, %{
         world_id: world_id,
@@ -84,7 +62,7 @@ defmodule McEx.Chunk do
     McEx.Native.Chunk.destroy_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)})
 
     message = {:block, :destroy, {x, y, z}}
-    McEx.Topic.send_world_player(state.world_id, message)
+    McEx.Registry.world_players_send(state.world_id, message)
 
     {:noreply, state}
   end

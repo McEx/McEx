@@ -2,8 +2,12 @@ defmodule McEx.Chunk.Manager do
   use GenServer
   use McEx.Util
 
-  def start_link(params) do
-    GenServer.start_link(__MODULE__, params, [])
+  def start_link(world_id) do
+    GenServer.start_link(__MODULE__, world_id, [])
+  end
+
+  def get_chunk_manager(world_id) do
+    McEx.Registry.world_service_pid(world_id, :chunk_manager)
   end
 
   def get_chunk(manager, chunk) do
@@ -22,7 +26,7 @@ defmodule McEx.Chunk.Manager do
   end
 
   def init(world_id) do
-    McEx.Topic.reg_world_chunk_manager(world_id)
+    McEx.Registry.reg_world_service(world_id, :chunk_manager)
     {:ok, %{
         world_id: world_id,
         chunks: %{}, #{x, y}: PID

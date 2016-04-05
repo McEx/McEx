@@ -38,7 +38,6 @@ defmodule McEx.Player do
         client_settings: %ClientSettings{},
         loaded_chunks: HashSet.new,
         world_id: nil,
-        world_pid: nil,
         chunk_manager_pid: nil,
         tracked_players: [])
   end
@@ -46,8 +45,8 @@ defmodule McEx.Player do
     defstruct(name: nil, uuid: nil)
   end
 
-  def start_link(conn, {true, name, uuid}, entity_id, opts \\ []) do
-    GenServer.start_link(__MODULE__, {conn, {name, uuid}, entity_id}, opts)
+  def start_link(world_id, conn, {true, name, uuid}, entity_id, opts \\ []) do
+    GenServer.start_link(__MODULE__, {world_id, conn, {name, uuid}, entity_id}, opts)
   end
 
   def client_events(_, []), do: nil
@@ -71,14 +70,11 @@ defmodule McEx.Player do
     }
   end
 
-  def init({connection, {name, uuid}, entity_id}) do
+  def init({world_id, connection, {name, uuid}, entity_id}) do
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid} (eid: #{entity_id})")
     Process.monitor(connection.control)
 
-    world_id = :test
-    world_pid = McEx.World.WorldManager.get_world(world_id)
-    Process.monitor(world_pid)
-    chunk_manager_pid = McEx.World.World.get_chunk_manager(world_pid)
+    chunk_manager_pid = McEx.Chunk.Manager.get_chunk_manager(world_id)
 
     state = %PlayerState{
       connection: connection,
@@ -86,10 +82,10 @@ defmodule McEx.Player do
       name: name,
       uuid: uuid,
       world_id: world_id,
-      world_pid: world_pid,
       chunk_manager_pid: chunk_manager_pid}
 
-    McEx.Topic.reg_server_player(state.eid, state.name, state.uuid)
+    #McEx.Topic.reg_server_player(state.eid, state.name, state.uuid)
+    #McEx.Registry.reg_world_player(world_id)
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
     {:ok, state}
@@ -121,13 +117,6 @@ defmodule McEx.Player do
   def handle_info({:DOWN, _ref, :process, connection_pid, _reason}, %{connection: connection_pid, name: name} = data) do
     Logger.info("User #{name} left the server")
     {:stop, :normal, data}
-  end
-  def handle_info({:DOWN, _ref, :process, world_pid, _reason}, %{world_pid: world_pid} = data) do
-    # o shit
-    # umm
-    # okey
-    # i guess we should handle this at some point
-    {:stop, :world_down, data}
   end
 
   def handle_info({:block, :destroy, pos}, state) do

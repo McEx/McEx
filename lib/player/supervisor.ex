@@ -1,19 +1,19 @@
 defmodule McEx.Player.Supervisor do
   use Supervisor
 
-  def start_link do
-    Supervisor.start_link(__MODULE__, :ok, [name: McEx.Player.Supervisor])
+  def start_link(world_id) do
+    Supervisor.start_link(__MODULE__, world_id)
   end
 
-  def start_player(connection, player, entity_id) do
-    Supervisor.start_child(McEx.Player.Supervisor, [connection, player, entity_id])
+  def start_player(world_id, connection, player, entity_id) do
+    pid = McEx.Registry.world_service_pid(world_id, :player_supervisor)
+    Supervisor.start_child(pid, [connection, player, entity_id])
   end
 
-  def init(:ok) do
-    spawn_link &McEx.Player.KeepAliveSender.loop/0
-
+  def init(world_id) do
+    McEx.Registry.reg_world_service(world_id, :player_supervisor)
     children = [
-      worker(McEx.Player, [], restart: :temporary)
+      worker(McEx.Player, [world_id], restart: :temporary)
     ]
 
     opts = [strategy: :simple_one_for_one]

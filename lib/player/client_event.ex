@@ -1,6 +1,6 @@
 defmodule McEx.Player.ClientEvent do
   def bcast_players(world_id, msg) do
-    McEx.Topic.send_world_player(world_id, msg)
+    McEx.Registry.world_players_send(world_id, msg)
   end
   def bcast_players_sev(world_id, msg) do
     bcast_players(world_id, {:server_event, msg})
@@ -45,7 +45,9 @@ defmodule McEx.Player.ClientEvent do
   def handle({:action_digging, mode, {x, _, z} = position, face}, state) do
     if mode == :finished do
       chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
-      GenServer.cast(:gproc.lookup_pid({:n, :l, {:world, state.world_id, :chunk, chunk_pos}}), {:block_destroy, position})
+
+      chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
+      GenServer.cast(chunk_pid, {:block_destroy, position})
     end
     state
   end

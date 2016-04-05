@@ -35,7 +35,10 @@ defmodule McEx.Net.Handlers do
   end
 
   def join(state) do
-    entity_id = McEx.EntityIdGenerator.get_id
+    # Hardcoded for now.
+    world_id = :test_world
+
+    entity_id = McEx.EntityIdGenerator.get_id(world_id)
 
     transitions = [
       {:send_packet,
@@ -81,7 +84,8 @@ defmodule McEx.Net.Handlers do
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
-    {:ok, player_server} = McEx.Player.Supervisor.start_player(state.protocol_state.connection,
+    {:ok, player_server} = McEx.Player.Supervisor.start_player(world_id,
+                                                               state.protocol_state.connection,
                                                                state.protocol_state.user,
                                                                entity_id)
     # TODO: Handle player server crash
