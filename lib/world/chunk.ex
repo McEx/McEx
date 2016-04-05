@@ -41,7 +41,7 @@ defmodule McEx.Chunk do
   def init({world_id, pos}) do
     chunk = McEx.Native.Chunk.create
     {:chunk, x, z} = pos
-    :gproc.reg({:n, :l, {:world, world_id, :chunk, pos}})
+    McEx.Topic.reg_world_chunk(world_id, pos)
     McEx.Native.Chunk.generate_chunk(chunk, {x, z})
     {:ok, %{
         world_id: world_id,
@@ -82,7 +82,10 @@ defmodule McEx.Chunk do
   end
   def handle_cast({:block_destroy, {x, y, z}}, state) do
     McEx.Native.Chunk.destroy_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)})
-    :gproc.send({:p, :l, {:world, state.world_id, :players}}, {:block, :destroy, {x, y, z}})
+
+    message = {:block, :destroy, {x, y, z}}
+    McEx.Topic.send_world_player(state.world_id, message)
+
     {:noreply, state}
   end
 end

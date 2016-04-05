@@ -1,0 +1,65 @@
+* Abstractions
+** Entity component system?
+*** Seems like a bad fit for a functional language in its raw form
+** Property pattern?
+*** Base properties / Dynamic properties
+**** Base properties are set from the beginning, per entity type
+**** Dynamic properties are things like health/position/name/id
+***** These are the ones that get saved
+**** Same interface?
+***** Offer the ability to override base properties?
+****** Too powerful?
+****** Very customizable
+****** Final (non overridable) base properties?
+******* For things like entity type, should not change to prevent bad behavior
+*** Property transitions?
+**** Need to handle changes in properties, send data to client/listeners
+**** We may need to handle transitions in multiple attributes at the same time
+***** Transaction?
+*** Behaviors
+**** How do we act on events? (say input data from player)
+**** How do we act on property changes?
+***** Derived properties?
+*** Thoughts
+**** Way to query things like position of all entities without iterating them all?
+***** Avoids O(n^2)
+***** Server listening to event bus, updating state?
+****** Could update central read-optimized ETS table?
+****** Easily queries by the entity processes themselves
+***** Basically implements a sort of entity database server
+**** Avoiding infinite loops
+***** Should be easily runtime testable in most cases?
+***** Would like to avoid imposing constrains because of this
+**** This is starting to look like a kind of reactive programming?
+*** Example events
+**** We get a move event from player client
+***** An event behavior gets triggered, updates the position
+***** Property behavior gets triggered by property update, send position event to event hub
+**** We get a move event from event hub (player entity)
+***** Event behavior gets triggered, 
+**** An NPC moves once per tick
+***** Tick event behavior gets triggered, runs per-tick AI code, sets position property
+***** Property behavior gets triggered, send position to event hub
+**** A player punches another player
+This is an action that does not persist state in the same way as, say movement.
+(Is there any reason to handle it in a different way than things that do?)
+(Are there any actions like this we don't want to trigger a cooldown? Possibly from the server?)
+It would make sense to trigger a cooldown timer on actions like this, this also helps with anticheat.
+Cooldowns like this might be a very common action, do we want to take them into account in the implementation?
+***** An events gets triggered, updates the punch state? (timer?), 
+**** A player walks off a block, he falls
+*** Implementation
+**** Entity type represented by module
+***** Enables us to do more stuff at compile time in the future if important for performance
+**** Declare properties with an accumulated module attributes?
+***** Something like '@property :name'
+***** Convenient way to organize code, like a headline
+**** Code reusability provided by "behavior" modules with __using__ macro
+***** Macro would defdelegate to the module itself
+***** A lot of common functionality could (probably) be implemented this way
+****** Health
+****** Movement
+****** Physics
+***** Ability to depend on other behaviors/properties?
+****** Not needed for now, can look into if manual ever becomes an issue
+***** Customized by properties(ideal? could be more dynamic. possibly only for things like max health?) or callbacks(maybe for more logicy things)

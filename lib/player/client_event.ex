@@ -1,8 +1,10 @@
 defmodule McEx.Player.ClientEvent do
   def bcast_players(world_id, msg) do
-    :gproc.send({:p, :l, {:world, world_id, :players}}, msg)
+    McEx.Topic.send_world_player(world_id, msg)
   end
-  def bcast_players_sev(world_id, msg), do: bcast_players(world_id, {:server_event, msg})
+  def bcast_players_sev(world_id, msg) do
+    bcast_players(world_id, {:server_event, msg})
+  end
 
   def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}), do: {:rel_pos, x-x0, y-y0, z-z0}
 

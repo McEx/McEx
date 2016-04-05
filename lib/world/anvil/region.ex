@@ -1,7 +1,3 @@
-defmodule McEx.World.AnvilChunk do
-
-end
-
 defmodule McEx.World.AnvilRegion do
   # Client
   def test do

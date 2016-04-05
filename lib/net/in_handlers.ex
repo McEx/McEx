@@ -63,7 +63,21 @@ defmodule McEx.Net.Handlers do
          yaw: 0,
          pitch: 0,
          flags: 0}},
-
+      {:send_packet,
+       %Server.Play.SpawnEntityLiving{
+         entity_id: 1000,
+         type: 54,
+         x: 0,
+         y: 3200,
+         z: 0,
+         yaw: 0,
+         pitch: 0,
+         head_pitch: 0,
+         velocity_x: 0,
+         velocity_y: 0,
+         velocity_z: 0,
+         metadata: [],
+       }}
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.

@@ -18,10 +18,10 @@ defmodule McEx.Player do
           hat: true)
     end
     defstruct(
-        locale: "en_GB", 
-        view_distance: 8, 
-        chat_mode: :enabled, 
-        chat_colors: true, 
+        locale: "en_GB",
+        view_distance: 8,
+        chat_mode: :enabled,
+        chat_colors: true,
         skin_parts: nil)
   end
 
@@ -42,7 +42,7 @@ defmodule McEx.Player do
         chunk_manager_pid: nil,
         tracked_players: [])
   end
-  defmodule PlayerListInfo do 
+  defmodule PlayerListInfo do
     defstruct(name: nil, uuid: nil)
   end
 
@@ -76,9 +76,9 @@ defmodule McEx.Player do
     Process.monitor(connection.control)
 
     world_id = :test
-    world_pid = McEx.World.Manager.get_world(world_id)
+    world_pid = McEx.World.WorldManager.get_world(world_id)
     Process.monitor(world_pid)
-    chunk_manager_pid = McEx.World.get_chunk_manager(world_pid)
+    chunk_manager_pid = McEx.World.World.get_chunk_manager(world_pid)
 
     state = %PlayerState{
       connection: connection,
@@ -89,7 +89,7 @@ defmodule McEx.Player do
       world_pid: world_pid,
       chunk_manager_pid: chunk_manager_pid}
 
-    :gproc.reg({:p, :l, :server_player}, {state.name, state.uuid})
+    McEx.Topic.reg_server_player(state.eid, state.name, state.uuid)
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
     {:ok, state}

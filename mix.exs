@@ -36,9 +36,9 @@ defmodule McEx.Mixfile do
      {:httpotion, "~> 2.1.0"},
      {:gproc, "~> 0.5.0"},
      {:uuid, "~> 1.1"},
+     {:credo, "~> 0.3", only: [:dev, :test]},
      {:mc_protocol, "~> 0.0.2"}]
      #{:mc_protocol, path: "../elixir_mc_protocol"}]
-    
   end
 end
 

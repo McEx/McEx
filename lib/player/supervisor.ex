@@ -20,11 +20,3 @@ defmodule McEx.Player.Supervisor do
     supervise(children, opts)
   end
 end
-
-defmodule McEx.Player.KeepAliveSender do
-  def loop do
-    :gproc.send({:p, :l, :server_player}, {:server_event, {:keep_alive_send, :rand.uniform(16000), 3}})
-    :timer.sleep(10_000)
-    loop
-  end
-end

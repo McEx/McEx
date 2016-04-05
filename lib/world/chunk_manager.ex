@@ -1,4 +1,3 @@
-
 defmodule McEx.Chunk.Manager do
   use GenServer
   use McEx.Util
@@ -23,7 +22,7 @@ defmodule McEx.Chunk.Manager do
   end
 
   def init(world_id) do
-    :gproc.reg({:n, :l, {:world_chunk_manager, world_id}})
+    McEx.Topic.reg_world_chunk_manager(world_id)
     {:ok, %{
         world_id: world_id,
         chunks: %{}, #{x, y}: PID
