@@ -5,7 +5,6 @@ defmodule McEx.Registry do
   {:n, :l, {:world, world_id, ident}}
 
   def reg_world_service(world_id, ident) do
-    IO.inspect {"AAAA", world_id, ident}
     :gproc.reg(world_service_key(world_id, ident))
   end
 

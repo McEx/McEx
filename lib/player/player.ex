@@ -7,7 +7,7 @@ defmodule McEx.Player do
   @type startup_options :: %{
     connection: term,
     entity_id: integer,
-    user: {bool, string, %McProtocol.UUID{}},
+    user: {boolean, String.t, %McProtocol.UUID{}},
   }
 
   defmodule PlayerLook, do: defstruct(yaw: 0, pitch: 0)
@@ -51,7 +51,7 @@ defmodule McEx.Player do
     defstruct(name: nil, uuid: nil)
   end
 
-  @spec start_link(term, startup_options)
+  @spec start_link(term, startup_options) :: GenServer.on_start
   def start_link(world_id, options) do
     GenServer.start_link(__MODULE__, {world_id, options})
   end
@@ -78,7 +78,7 @@ defmodule McEx.Player do
   end
 
   def init({world_id, options}) do
-    {authed, name, uuid} = options.user
+    %{online: authed, name: name, uuid: uuid} = options.identity
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 
