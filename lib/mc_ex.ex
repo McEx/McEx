@@ -18,7 +18,7 @@ defmodule McEx.Supervisor do
     children = [
       worker(McProtocol.Crypto.ServerKeyProvider, [[name: McEx.ServerKeyProvider]]),
       supervisor(McEx.World.Supervisor, [:test_world]),
-      supervisor(McEx.Net, [])
+      supervisor(McEx.Net.Supervisor, [])
     ]
 
     opts = [strategy: :one_for_one, name: McEx.Supervisor]
