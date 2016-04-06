@@ -92,10 +92,7 @@ defmodule McEx.Net.Handlers do
         entity_id: entity_id,
       }
     )
-    #{:ok, player_server} = McEx.Player.Supervisor.start_player(world_id,
-    #                                                           state.protocol_state.connection,
-    #                                                           state.protocol_state.user,
-    #                                                           entity_id)
+
     # TODO: Handle player server crash
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
 

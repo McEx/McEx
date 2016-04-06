@@ -4,6 +4,12 @@ defmodule McEx.Player do
   require Logger
   alias McProtocol.Packet
 
+  @type startup_options :: %{
+    connection: term,
+    entity_id: integer,
+    user: {bool, string, %McProtocol.UUID{}},
+  }
+
   defmodule PlayerLook, do: defstruct(yaw: 0, pitch: 0)
 
   defmodule ClientSettings do
@@ -45,6 +51,7 @@ defmodule McEx.Player do
     defstruct(name: nil, uuid: nil)
   end
 
+  @spec start_link(term, startup_options)
   def start_link(world_id, options) do
     GenServer.start_link(__MODULE__, {world_id, options})
   end
