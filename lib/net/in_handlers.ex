@@ -84,10 +84,18 @@ defmodule McEx.Net.Handlers do
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
-    {:ok, player_server} = McEx.Player.Supervisor.start_player(world_id,
-                                                               state.protocol_state.connection,
-                                                               state.protocol_state.user,
-                                                               entity_id)
+    {:ok, player_server} = McEx.World.EntitySupervisor.start_entity(
+      world_id, McEx.Player,
+      %{
+        connection: state.protocol_state.connection,
+        user: state.protocol_state.user,
+        entity_id: entity_id,
+      }
+    )
+    #{:ok, player_server} = McEx.Player.Supervisor.start_player(world_id,
+    #                                                           state.protocol_state.connection,
+    #                                                           state.protocol_state.user,
+    #                                                           entity_id)
     # TODO: Handle player server crash
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
 

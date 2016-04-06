@@ -29,6 +29,7 @@ defmodule McEx.Player do
     defstruct(
         keepalive_state: nil,
         eid: nil,
+        authed: nil,
         name: nil,
         uuid: nil,
         connection: nil,
@@ -38,15 +39,14 @@ defmodule McEx.Player do
         client_settings: %ClientSettings{},
         loaded_chunks: HashSet.new,
         world_id: nil,
-        chunk_manager_pid: nil,
         tracked_players: [])
   end
   defmodule PlayerListInfo do
     defstruct(name: nil, uuid: nil)
   end
 
-  def start_link(world_id, conn, {true, name, uuid}, entity_id, opts \\ []) do
-    GenServer.start_link(__MODULE__, {world_id, conn, {name, uuid}, entity_id}, opts)
+  def start_link(world_id, options) do
+    GenServer.start_link(__MODULE__, {world_id, options})
   end
 
   def client_events(_, []), do: nil
@@ -70,22 +70,20 @@ defmodule McEx.Player do
     }
   end
 
-  def init({world_id, connection, {name, uuid}, entity_id}) do
-    Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid} (eid: #{entity_id})")
-    Process.monitor(connection.control)
-
-    chunk_manager_pid = McEx.Chunk.Manager.get_chunk_manager(world_id)
+  def init({world_id, options}) do
+    {authed, name, uuid} = options.user
+    Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
+    Process.monitor(options.connection.control)
 
     state = %PlayerState{
-      connection: connection,
-      eid: entity_id,
+      connection: options.connection,
+      eid: options.entity_id,
+      authed: authed,
       name: name,
       uuid: uuid,
       world_id: world_id,
-      chunk_manager_pid: chunk_manager_pid}
+    }
 
-    #McEx.Topic.reg_server_player(state.eid, state.name, state.uuid)
-    #McEx.Registry.reg_world_player(world_id)
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
     {:ok, state}

@@ -1,18 +1,21 @@
 defmodule McEx.World.Supervisor do
   use Supervisor
 
-  def start_link() do
-    Supervisor.start_link(__MODULE__, :test_world)
+  def start_link(world_id) do
+    Supervisor.start_link(__MODULE__, world_id)
   end
 
-  def init(server_id) do
+  def init(world_id) do
     children = [
-      worker(McEx.Player.KeepAliveSender, [server_id]),
-      worker(McEx.EntityIdGenerator, [server_id]),
-      supervisor(McEx.Chunk.ChunkSupervisor, [server_id]),
-      worker(McEx.Chunk.Manager, [server_id]),
-      supervisor(McEx.Player.Supervisor, [server_id]), # TODO: Should be replaced with entity supervisor
-      worker(McEx.World.PlayerTracker, [server_id]),
+      worker(McEx.EntityIdGenerator, [world_id]),
+
+      supervisor(McEx.Chunk.ChunkSupervisor, [world_id]),
+      worker(McEx.Chunk.Manager, [world_id]),
+
+      worker(McEx.Player.KeepAliveSender, [world_id]),
+      worker(McEx.World.PlayerTracker, [world_id]),
+
+      supervisor(McEx.World.EntitySupervisor, [world_id])
     ]
 
     opts = [strategy: :one_for_all]
