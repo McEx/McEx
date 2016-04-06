@@ -10,9 +10,6 @@ defmodule McEx.World.Supervisor do
       worker(McEx.Player.KeepAliveSender, [server_id]),
       worker(McEx.EntityIdGenerator, [server_id]),
       supervisor(McEx.Chunk.ChunkSupervisor, [server_id]),
-      #worker(McEx.World.World, [server_id]),
-      #supervisor(McEx.World.WorldSupervisor, []),
-      #worker(McEx.World.WorldManager, []),
       worker(McEx.Chunk.Manager, [server_id]),
       supervisor(McEx.Player.Supervisor, [server_id]), # TODO: Should be replaced with entity supervisor
       worker(McEx.World.PlayerTracker, [server_id]),
