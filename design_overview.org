@@ -1,0 +1,47 @@
+* McEx Design Overview
+** Components
+*** World
+In a normal minecraft server, there might be a single server instance that listens on a single port for connections, handling them from beginning to end.
+Multiworld is usually handled by several world instances in the single server.
+
+McEx does it a bit differently. In McEx, a world is what contains chunks,
+entities and other game logic. A world is a completely self-contained unit, and
+can be started and stopped very easily. At first sight, this might seem
+limiting, when every world is self-contained, and doesn't interact with other
+worlds in any way, how is multiworld possible? Before explaining that, I will
+talk a bit about how connections are handled.
+*** Connections
+Connections are handled separately from world and gameplay logic. Connection and
+protocol handling is written on top of the McProtocol library, which provides us
+some very nice features.
+
+In many ways connections are handled more like a proxy than a traditional
+listener. A process is accepted, the standard login procedure is performed
+(accomplished with 'McProtocol.Handler's, short for protocol handlers). When the
+login is completed, the McEx protocol handler treads into action. When provided
+with a world instance, it will spawn the player in the world, and handle all
+messages to and from the connection.
+
+But what if we want to change a world? This is where the power of the handler
+pattern really starts to show. You can stop the protocol handler for the current
+world, and tell the connection to transition to a new one. This will despawn the
+player from the world, the new handler will take over, and the player will be
+respawned in the new world. The same thing can optionally happen if a world
+crashes. Another handler can take over the connection, and the player can be
+spawned into another world.
+
+The same handler system that we use for multiworld in elixir, can also be used
+in another way. A proxy handler can relay the connection onwards to an external
+minecraft server. If the server crashes, the player can, just as explained
+above, be dropped into another server or world, seamlessly.
+
+A proxy can also easily inspect and potentially modify the packets passing
+through, which could enable some cool things to be done.
+*** Entities
+When a McEx handler is attached to a connection, the handler will spawn a player
+entity for the player. This entity will be supervised by the world entity
+supervisor.
+*** Chunks
+A single world has several chunks. All chunks are hosted under the chunk
+supervisor. Chunks are loaded and unloaded by interaction with player entities.
+** More to come when the code gets written
