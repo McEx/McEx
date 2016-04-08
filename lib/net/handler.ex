@@ -2,9 +2,7 @@ defmodule McEx.Net.Handler do
   use McProtocol.Handler
   use GenServer
 
-  def parent_handler, do: McProtocol.Handler.Login
-
-  def enter(%{direction: :Client, mode: :Play} = stash) do
+  def enter(_args, %{direction: :Client, mode: :Play} = stash) do
     {:ok, handler_pid} = GenServer.start(__MODULE__, stash)
     transitions = GenServer.call(handler_pid, {:enter, stash})
     {transitions, handler_pid}

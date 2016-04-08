@@ -6,7 +6,7 @@ defmodule McEx.Net.ConnectionSupervisor do
   end
 
   def serve_socket(supervisor, socket) do
-    Supervisor.start_child(supervisor, [socket, :Client, McEx.Net.Handler])
+    Supervisor.start_child(supervisor, [socket, :Client, McEx.Net.SimpleOrchestrator])
   end
 
   def init(:ok) do
