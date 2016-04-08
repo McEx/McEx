@@ -6,7 +6,7 @@
   "httpotion": {:hex, :httpotion, "2.1.0"},
   "ibrowse": {:git, "https://github.com/cmullaparthi/ibrowse.git", "b5c705cb8fc369cc51012eac9fd49e5f7b6a87e9", []},
   "mc_data": {:hex, :mc_data, "0.0.2"},
-  "mc_protocol": {:hex, :mc_protocol, "0.0.2"},
+  "mc_protocol": {:git, "https://github.com/McEx/McProtocol.git", "1542bfc85b8526c30d6b84a9dc47835a0932171f", []},
   "poison": {:hex, :poison, "2.0.1"},
   "proto_def": {:hex, :proto_def, "0.0.2"},
   "uuid": {:hex, :uuid, "1.1.3"}}
