@@ -11,7 +11,8 @@ defmodule McEx.Net.SimpleOrchestrator do
     {:reply, {McProtocol.Handler.Handshake, %{}}, state}
   end
   def handle_call({:next, {McProtocol.Handler.Handshake, :Status}}, _from, state) do
-    {:reply, {McProtocol.Handler.Status, %{}}, state}
+    args = %{response: McEx.ServerListResponse.build(123, 42)} # TODO: get actual (max) nr of players
+    {:reply, {McProtocol.Handler.Status, args}, state}
   end
   def handle_call({:next, {McProtocol.Handler.Handshake, :Login}}, _from, state) do
     {:reply, {McProtocol.Handler.Login, %{}}, state}
