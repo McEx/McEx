@@ -25,4 +25,7 @@ defmodule McEx.Native.Chunk do
 
   def n_destroy_block(_chunk_res, {_x, _y, _z}), do: exit(:nif_library_not_loaded)
   def destroy_block(chunk_res, pos), do: n_destroy_block(chunk_res, pos)
+
+  def n_gen_chunk_raw({_x, _y}), do: exit(:nif_library_not_loaded)
+  def gen_chunk_raw(pos), do: n_gen_chunk_raw(pos)
 end
