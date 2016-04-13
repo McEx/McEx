@@ -14,9 +14,10 @@ time = "0.1.34"
 opensimplex = "0.2.0"
 rustler = "=0.8.0"
 rustler_codegen = "=0.8.0"
+voxel_worldgen = "0.1.0"
 
-[dependencies.voxel_worldgen]
-path = "../../voxel_worldgen/"
+#[dependencies.voxel_worldgen]
+#path = "../../voxel_worldgen/"
 
 #[dependencies.rustler]
 #git = "https://github.com/hansihe/Rustler.git"
