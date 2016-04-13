@@ -42,22 +42,24 @@ defmodule McEx.Net.HandlerClauses do
          z: 0,
          yaw: 0,
          pitch: 0,
-         flags: 0}},
-      {:send_packet,
-       %Server.Play.SpawnEntityLiving{
-         entity_id: 1000,
-         type: 54,
-         x: 0,
-         y: 3200,
-         z: 0,
-         yaw: 0,
-         pitch: 0,
-         head_pitch: 0,
-         velocity_x: 0,
-         velocity_y: 0,
-         velocity_z: 0,
-         metadata: [],
-       }}
+         flags: 0,
+         teleport_id: 0,
+        }},
+      # {:send_packet,
+       # %Server.Play.SpawnEntityLiving{
+       #   entity_id: 1000,
+       #   type: 54,
+       #   x: 0,
+       #   y: 3200,
+       #   z: 0,
+       #   yaw: 0,
+       #   pitch: 0,
+       #   head_pitch: 0,
+       #   velocity_x: 0,
+       #   velocity_y: 0,
+       #   velocity_z: 0,
+       #   metadata: [],
+       # }},
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
@@ -100,6 +102,9 @@ defmodule McEx.Net.HandlerClauses do
       end)
     {[], state}
   end
+  def handle_packet(%Client.Play.TeleportConfirm{} = msg, stash, state) do
+    {[], state}
+  end
 
   def handle_packet(%Client.Play.Flying{} = msg, stash, state) do
     Player.client_event(state.player, {:set_on_ground, msg.on_ground})
@@ -126,7 +131,9 @@ defmodule McEx.Net.HandlerClauses do
         2 -> {:action_digging, :finished, msg.location, msg.face}
         3 -> {:action_drop_item, :stack}
         4 -> {:action_drop_item, :single}
-        5 -> {:action_use_item}
+        5 -> {:action_use_item, false}
+        6 -> {:action_swap_item}
+        status -> Logger.warn "Unknown dig status #{status} by player #{stash.identity.name}"
       end)
     {[], state}
   end
@@ -134,9 +141,7 @@ defmodule McEx.Net.HandlerClauses do
   def handle_packet(
         %Client.Play.BlockPlace{location: {:pos, -1, 255, -1}, direction: -1},
         stash, state) do
-    # WTF special case :/
-    # TODO: Figure this out
-    Player.client_event(state.player, {:item_state_update})
+    Player.client_event(state.player, {:action_use_item, true})
     {[], state}
   end
   def handle_packet(%Client.Play.BlockPlace{} = msg, stash, state) do
@@ -147,7 +152,7 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   def handle_packet(%Client.Play.HeldItemSlot{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_held_item, msg.slot})
+    Player.client_event(state.player, {:set_held_item, msg.slot_id})
     {[], state}
   end
 
@@ -157,8 +162,11 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
+    if msg.entity_id != stash.entity_id,
+      do: Logger.warn "Non-matching entity_id in EntityAction: #{msg.entity_id} vs #{stash.entity_id}, player #{stash.identity.name}"
     Player.client_event(state.player,
       case msg.action_id do
+        # TODO we should not rely on the client to send his eid
         0 -> {:player_set_crouch, msg.entity_id, true}
         1 -> {:player_set_crouch, msg.entity_id, false}
         2 -> {:player_bed_leave, msg.entity_id}
@@ -166,6 +174,7 @@ defmodule McEx.Net.HandlerClauses do
         4 -> {:player_set_sprint, msg.entity_id, false}
         5 -> {:player_horse_jump, msg.entity_id, msg.jump_boost}
         6 -> {:player_open_inventory, msg.entity_id}
+        action_id -> Logger.warn "Unknown EntityAction #{action_id} from player #{stash.identity.name}"
       end)
     {[], state}
   end
@@ -181,12 +190,11 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
   def handle_packet(%Client.Play.WindowClick{}, stash, state) do
-    # TODO: Handle the complex matrix of click operations :(
-    # http://wiki.vg/Protocol#Click_Window
+    # TODO: apply click to inventory
     {[], state}
   end
   def handle_packet(%Client.Play.Transaction{}, stash, state) do
-    # TODO: Figure out if I should do something here
+    # can be ignored until we do cheat detection
     {[], state}
   end
   def handle_packet(%Client.Play.SetCreativeSlot{} = msg, stash, state) do
@@ -241,10 +249,10 @@ defmodule McEx.Net.HandlerClauses do
 
   def handle_packet(%Client.Play.ClientCommand{} = msg, stash, state) do
     Player.client_event(state.player,
-      case msg.payload do
+      case msg.action_id do
         0 -> {:action_respawn}
         1 -> {:stats_request}
-        2 -> {:stats_achivement, :taking_inventory}
+        2 -> {:stats_achievement, :taking_inventory}
       end)
     {[], state}
   end
@@ -263,4 +271,10 @@ defmodule McEx.Net.HandlerClauses do
     Player.client_event(state.player, {:action_resource_pack_status, msg.hash, msg.result})
     {[], state}
   end
+
+  def handle_packet(msg, stash, state) do
+    Logger.warn "Unhandled packet from #{stash.identity.name} #{inspect msg}"
+    {[], state}
+  end
+
 end

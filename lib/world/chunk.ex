@@ -1,9 +1,8 @@
 defmodule McEx.Chunk do
   use GenServer
   alias McEx.Net.Connection.Write
+  alias McChunk.Chunk
   alias McProtocol.Packet.Server
-
-  use Bitwise
 
   def start_link(world_id, pos, opts \\ []) do
     GenServer.start_link(__MODULE__, {world_id, pos}, opts)
@@ -17,28 +16,26 @@ defmodule McEx.Chunk do
   end
 
   def init({world_id, pos}) do
-    chunk = McEx.Native.Chunk.create
-    {:chunk, x, z} = pos
     McEx.Registry.reg_chunk_server(world_id, pos)
-    McEx.Native.Chunk.generate_chunk(chunk, {x, z})
+    chunk = gen_chunk(pos)
     {:ok, %{
         world_id: world_id,
         chunk_resource: chunk,
         pos: pos}}
   end
 
-  def write_empty_row(bin) do
-    <<bin::binary, 0::256*16>>
-  end
-  def write_row_data(bin, row) do
-    <<bin::binary, row::binary>>
+  defp gen_chunk({:chunk, cx, cz}) do
+    data = McEx.Native.Chunk.gen_chunk_raw({cx, cz})
+    {sections, ""} = Enum.reduce(0..15, {[], data}, fn sy, {sections, data} ->
+      <<section_blocks::binary-size(4096), data::binary>> = data
+      section = McChunk.Section.new_from_old(section_blocks)
+      {[section | sections], data}
+    end)
+    %Chunk{Chunk.new | sections: Enum.reverse(sections)}
   end
 
-  def write_chunk_packet(state) do
-    alias McProtocol.DataTypes.Encode
-
-    {written_mask, size, data} = McEx.Native.Chunk.assemble_packet(state.chunk_resource,
-                                                                   {true, true, 0})
+  defp assemble_chunk_packet(state) do
+    {data, written_mask} = Chunk.encode(state.chunk_resource, {true, true, 0})
 
     {:chunk, x, z} = state.pos
     %Server.Play.MapChunk{
@@ -51,15 +48,14 @@ defmodule McEx.Chunk do
   end
 
   def handle_cast({:send_chunk, conn}, state) do
-    #Write.write_packet(writer, write_chunk_packet(state))
-    McProtocol.Acceptor.ProtocolState.Connection.write_packet(conn, write_chunk_packet(state))
+    McProtocol.Acceptor.ProtocolState.Connection.write_packet(conn, assemble_chunk_packet(state))
     {:noreply, state}
   end
   def handle_cast(:stop_chunk, state) do
     {:stop, :normal, state}
   end
   def handle_cast({:block_destroy, {x, y, z}}, state) do
-    McEx.Native.Chunk.destroy_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)})
+    Chunk.set_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)}, 0)
 
     message = {:block, :destroy, {x, y, z}}
     McEx.Registry.world_players_send(state.world_id, message)

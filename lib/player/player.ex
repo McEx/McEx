@@ -119,9 +119,10 @@ defmodule McEx.Player do
     end
   end
 
-  def handle_info({:DOWN, _ref, :process, connection_pid, _reason}, %{connection: connection_pid, name: name} = data) do
+  def handle_info({:DOWN, _ref, :process, connection_pid, reason}, %{connection: %{control: connection_pid}, name: name} = state) do
     Logger.info("User #{name} left the server")
-    {:stop, :normal, data}
+    Logger.debug("reason: #{inspect reason}")
+    {:stop, :normal, state}
   end
 
   def handle_info({:block, :destroy, pos}, state) do

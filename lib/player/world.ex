@@ -9,13 +9,12 @@ defmodule McEx.Player.World do
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do
     {:chunk, chunk_x, chunk_z} = player_chunk = Pos.to_chunk(pos)
     radius = min(view_distance, 20) #TODO: Setting
-    
-    chunks_in_view = Enum.flat_map((chunk_x - radius)..(chunk_x + radius), fn(a) -> 
-          Enum.map((chunk_z - radius)..(chunk_z + radius), fn(b) -> 
-            {ChunkPos.distance(player_chunk, {:chunk, 16 * a + 8, 16 * b + 8}), {a, b}} 
-          end)
-      end)
-    Enum.map(Enum.sort(chunks_in_view, fn({dist1, _}, {dist2, _}) -> dist1 <= dist2 end), fn {_, {x, y}} -> {:chunk, x, y} end)
+
+    (for x <- (chunk_x - radius)..(chunk_x + radius),
+         z <- (chunk_z - radius)..(chunk_z + radius),
+         do: {ChunkPos.distance(player_chunk, {:chunk, 16 * x + 8, 16 * z + 8}), {x, z}})
+    |> Enum.sort(fn({dist1, _}, {dist2, _}) -> dist1 <= dist2 end)
+    |> Enum.map(fn {_, {x, z}} -> {:chunk, x, z} end)
   end
 
   def load_chunks(%PlayerState{} = state) do

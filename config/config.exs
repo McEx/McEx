@@ -23,5 +23,11 @@ use Mix.Config
 #
 #     import_config "#{Mix.env}.exs"
 
-config :mc_ex, :auth,
-  online: true
+config :mc_ex,
+	auth: [online: true],
+	chunk_impl: McChunk.Chunk # XXX
+
+config :mc_data, version: "1.9.2"
+
+config :mc_chunk,
+	block_store: McChunk.NativeStore

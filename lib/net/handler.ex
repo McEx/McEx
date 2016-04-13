@@ -1,6 +1,7 @@
 defmodule McEx.Net.Handler do
   use McProtocol.Handler
   use GenServer
+  require Logger
 
   def enter(_args, %{direction: :Client, mode: :Play} = stash) do
     {:ok, handler_pid} = GenServer.start(__MODULE__, stash)
@@ -35,6 +36,19 @@ defmodule McEx.Net.Handler do
 
   def handle_call({:handle, packet_data, stash}, _from,  state) do
     packet_data = packet_data |> McProtocol.Packet.In.fetch_packet
+
+    unless [
+        McProtocol.Packet.Client.Play.Settings,
+        McProtocol.Packet.Client.Play.CustomPayload,
+        McProtocol.Packet.Client.Play.TeleportConfirm,
+        McProtocol.Packet.Client.Play.KeepAlive,
+        McProtocol.Packet.Client.Play.PositionLook,
+        McProtocol.Packet.Client.Play.Position,
+        McProtocol.Packet.Client.Play.Look,
+        McProtocol.Packet.Client.Play.Abilities,
+      ] |> Enum.member?(packet_data.module),
+    do: Logger.debug inspect packet_data
+
     {transitions, state} = McEx.Net.HandlerClauses.handle_packet(
       packet_data.packet, stash, state)
     {:reply, transitions, state}
