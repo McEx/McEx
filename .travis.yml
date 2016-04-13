@@ -11,6 +11,7 @@ cache:
   - deps
 
 install:
+  - curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh
   - mix local.hex --force
   - mix deps.get
   - mix rustler.update_rust
