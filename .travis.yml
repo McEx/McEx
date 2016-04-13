@@ -1,0 +1,30 @@
+language: elixir
+elixir:
+  - 1.2.4
+
+branches:
+  only:
+  - master
+
+cache:
+  directories:
+  - deps
+
+install:
+  - mix local.hex --force
+  - mix deps.get
+  - mix rustler.update_rust
+
+script:
+  - mix test
+
+notifications:
+  irc:
+    on_success: change
+    on_failure: change
+    skip_join: true
+    channels:
+      - "irc.freenode.org#McEx"
+    template:
+      - "[%{repository_name} %{branch}] %{message} #%{build_number} %{build_url}"
+      - "[%{repository_name} %{branch}] %{commit_message} (%{commit} by %{author}) %{compare_url}"

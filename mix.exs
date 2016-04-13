@@ -40,7 +40,7 @@ defmodule McEx.Mixfile do
      {:uuid, "~> 1.1"},
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:mc_protocol, github: "McEx/McProtocol"},
-     {:rustler, "~> 0.0.1"}]
+     {:rustler, "~> 0.0.2"}]
   end
 end
 
