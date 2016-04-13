@@ -8,7 +8,9 @@ defmodule McEx.Mixfile do
      elixirc_paths: ["lib", "plugins"],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps]
+     compilers: [:rustler] ++ Mix.compilers,
+     deps: deps,
+     rustler_crates: ["rs"]]
   end
 
   # Configuration for the OTP application
@@ -37,7 +39,8 @@ defmodule McEx.Mixfile do
      {:gproc, "~> 0.5.0"},
      {:uuid, "~> 1.1"},
      {:credo, "~> 0.3", only: [:dev, :test]},
-     {:mc_protocol, github: "McEx/McProtocol"}]
+     {:mc_protocol, github: "McEx/McProtocol"},
+     {:rustler, "~> 0.0.1"}]
   end
 end
 

@@ -3,15 +3,11 @@ defmodule McEx.Native.Chunk.TestingWoo do
 end
 
 defmodule McEx.Native.Chunk do
+  require Rustler
   @on_load {:init, 0}
 
   def init do
-    #path = :filename.join(:code.priv_dir(:mc_ex), 'libchunk')
-    #path = :filename.join(:code.priv_dir(:mc_ex), 'libmcex_chunk')
-    path = hd(:filelib.wildcard('rs/target/{debug,release}/libmcex_chunk.*'))
-    path = :filename.rootname(path)
-    #IO.inspect path
-    :ok = :erlang.load_nif(path, 0)
+    :ok = Rustler.load_nif("mcex_chunk")
   end
 
   def n_create, do: exit(:nif_library_not_loaded)

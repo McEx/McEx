@@ -9,4 +9,5 @@
   "mc_protocol": {:git, "https://github.com/McEx/McProtocol.git", "1542bfc85b8526c30d6b84a9dc47835a0932171f", []},
   "poison": {:hex, :poison, "2.0.1"},
   "proto_def": {:hex, :proto_def, "0.0.2"},
+  "rustler": {:hex, :rustler, "0.0.1"},
   "uuid": {:hex, :uuid, "1.1.3"}}
