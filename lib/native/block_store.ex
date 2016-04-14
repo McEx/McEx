@@ -1,6 +1,8 @@
-defmodule McChunk.Native do
+defmodule McEx.Native.BlockStore do
   require Rustler
   @on_load {:init, 0}
+
+  @behaviour McChunk.BlockStore
 
   def init do
     :ok = Rustler.load_nif("mc_chunk_native")
@@ -11,34 +13,22 @@ defmodule McChunk.Native do
   def n_encode(_store), do: nil
   def n_get(_store, _bbits, _index), do: nil
   def n_set(_store, _bbits, _index, _val), do: nil
-end
 
-defmodule McChunk.NativeStore do
-  @behaviour McChunk.BlockStore
-
-  # TODO: Handle fails
-
-  def new(size) do
-    McChunk.Native.n_new(size)
-  end
+  def new(size), do: n_new(size)
 
   def decode(data, size) do
-    ret = McChunk.Native.n_decode(data, size)
+    ret = n_decode(data, size)
     data_size = size * 8
     rest_len = byte_size(data) - data_size
     {ret, :erlang.binary_part(data, data_size, rest_len)}
   end
 
-  def encode(store) do
-    McChunk.Native.n_encode(store)
-  end
+  def encode(store), do: n_encode(store)
 
-  def get(store, bbits, index) do
-    McChunk.Native.n_get(store, bbits, index)
-  end
+  def get(store, bbits, index), do: n_get(store, bbits, index)
 
   def set(store, bbits, index, value) do
-    :ok = McChunk.Native.n_set(store, bbits, index, value)
+    :ok = n_set(store, bbits, index, value)
     store
   end
 

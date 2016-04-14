@@ -15,7 +15,7 @@ use rustler::resource::ResourceCell;
 use rustler::atom::{get_atom, init_atom};
 
 rustler_export_nifs!(
-    "Elixir.McChunk.Native",
+    "Elixir.McEx.Native.BlockStore",
     [("n_new", 1, new),
      ("n_decode", 2, decode),
      ("n_encode", 1, encode),

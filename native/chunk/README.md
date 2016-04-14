@@ -1,4 +1,4 @@
-# Nif for Elixir.McChunk.Native
+# Nif for Elixir.McEx.Native.BlockStore
 
 To build the NIF module:
 
