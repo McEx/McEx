@@ -82,7 +82,7 @@ defmodule McEx.Chunk.Manager do
     #end
     {:noreply, state}
   end
-  
+
   def handle_call({:get_chunk, chunk}, _from, data) do
     response = case Map.fetch(data.chunks, chunk) do
       {:ok, chunk_data} -> {:ok, chunk_data.pid}

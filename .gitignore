@@ -2,6 +2,7 @@
 /deps
 erl_crash.dump
 *.ez
+mix.lock
 
 #vim
 [._]*.s[a-w][a-z]
@@ -17,5 +18,6 @@ Session.vim
 *.rlib
 *.dll
 *.exe
-/rs/target/
+/native/world/target/
+/native/chunk/target/
 /genbiome/target/

@@ -1,7 +1,3 @@
-defmodule McEx.Native.Chunk.TestingWoo do
-  defstruct testing: 12, another_test: "Testing!!"
-end
-
 defmodule McEx.Native.Chunk do
   require Rustler
   @on_load {:init, 0}
