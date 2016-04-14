@@ -164,14 +164,13 @@ defmodule McEx.Net.HandlerClauses do
   def handle_packet(%Client.Play.EntityAction{entity_id: eid} = msg, stash, %{entity_id: eid} = state) do
     Player.client_event(state.player,
       case msg.action_id do
-        # TODO we should not rely on the client to send his eid
-        0 -> {:player_set_crouch, msg.entity_id, true}
-        1 -> {:player_set_crouch, msg.entity_id, false}
-        2 -> {:player_bed_leave, msg.entity_id}
-        3 -> {:player_set_sprint, msg.entity_id, true}
-        4 -> {:player_set_sprint, msg.entity_id, false}
-        5 -> {:player_horse_jump, msg.entity_id, msg.jump_boost}
-        6 -> {:player_open_inventory, msg.entity_id}
+        0 -> {:player_set_crouch, eid, true}
+        1 -> {:player_set_crouch, eid, false}
+        2 -> {:player_bed_leave, eid}
+        3 -> {:player_set_sprint, eid, true}
+        4 -> {:player_set_sprint, eid, false}
+        5 -> {:player_horse_jump, eid, msg.jump_boost}
+        6 -> {:player_open_inventory, eid}
         action_id -> raise "unknown entity action: #{action_id}"
       end)
     {[], state}

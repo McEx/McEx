@@ -8,7 +8,7 @@ defmodule McEx.Player.World do
 
   def get_chunks_in_view(%PlayerState{position: pos, client_settings: %ClientSettings{view_distance: view_distance}}) do
     {:chunk, chunk_x, chunk_z} = player_chunk = Pos.to_chunk(pos)
-    radius = min(view_distance, 20) #TODO: Setting
+    radius = min(view_distance, Application.get_env(:mc_ex, :view_distance, 8))
 
     (for x <- (chunk_x - radius)..(chunk_x + radius),
          z <- (chunk_z - radius)..(chunk_z + radius),
