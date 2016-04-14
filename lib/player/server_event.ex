@@ -41,10 +41,10 @@ defmodule McEx.Player.ServerEvent do
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
       })
-      # write_packet(state, %Packet.Server.Play.EntityHeadRotation{
-      #   entity_id: eid,
-      #   head_yaw: deg_to_byte(yaw),
-      # })
+      write_packet(state, %Packet.Server.Play.EntityHeadLook{
+        entity_id: eid,
+        head_yaw: deg_to_byte(yaw),
+      })
     end
     state
   end
@@ -56,10 +56,10 @@ defmodule McEx.Player.ServerEvent do
         pitch: deg_to_byte(pitch),
         on_ground: on_ground,
       })
-      # write_packet(state, %Packet.Server.Play.EntityHeadRotation{
-      #   entity_id: eid,
-      #   head_yaw: deg_to_byte(yaw),
-      # })
+      write_packet(state, %Packet.Server.Play.EntityHeadLook{
+        entity_id: eid,
+        head_yaw: deg_to_byte(yaw),
+      })
     end
     state
   end
@@ -116,14 +116,14 @@ defmodule McEx.Player.ServerEvent do
     })
     for player <- players do
       if player.player_pid != self do
-        # write_packet(state, %Packet.Server.Play.NamedEntitySpawn{
-        #   entity_id: player.eid,
-        #   player_uuid: player.uuid,
-        #   x: 0, y: 260, z: 0,
-        #   yaw: 0, pitch: 0,
-        #   current_item: 0,
-        #   metadata: [],
-        # })
+        write_packet(state, %Packet.Server.Play.NamedEntitySpawn{
+          entity_id: player.eid,
+          player_uuid: player.uuid,
+          x: 0, y: 260, z: 0,
+          yaw: 0, pitch: 0,
+          # TODO: Fix metadata
+          metadata: [],
+        })
       end
     end
     :ok

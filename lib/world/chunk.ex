@@ -49,6 +49,7 @@ defmodule McEx.Chunk do
 
   def handle_cast({:send_chunk, conn}, state) do
     McProtocol.Acceptor.ProtocolState.Connection.write_packet(conn, assemble_chunk_packet(state))
+    :erlang.garbage_collect(self)
     {:noreply, state}
   end
   def handle_cast(:stop_chunk, state) do

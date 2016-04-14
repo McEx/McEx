@@ -133,7 +133,7 @@ defmodule McEx.Net.HandlerClauses do
         4 -> {:action_drop_item, :single}
         5 -> {:action_use_item, false}
         6 -> {:action_swap_item}
-        status -> Logger.warn "Unknown dig status #{status} by player #{stash.identity.name}"
+        status -> raise "unexpected block dig status: #{status}"
       end)
     {[], state}
   end
@@ -161,9 +161,7 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
-    if msg.entity_id != stash.entity_id,
-      do: Logger.warn "Non-matching entity_id in EntityAction: #{msg.entity_id} vs #{stash.entity_id}, player #{stash.identity.name}"
+  def handle_packet(%Client.Play.EntityAction{entity_id: eid} = msg, stash, %{entity_id: eid} = state) do
     Player.client_event(state.player,
       case msg.action_id do
         # TODO we should not rely on the client to send his eid
@@ -174,7 +172,7 @@ defmodule McEx.Net.HandlerClauses do
         4 -> {:player_set_sprint, msg.entity_id, false}
         5 -> {:player_horse_jump, msg.entity_id, msg.jump_boost}
         6 -> {:player_open_inventory, msg.entity_id}
-        action_id -> Logger.warn "Unknown EntityAction #{action_id} from player #{stash.identity.name}"
+        action_id -> raise "unknown entity action: #{action_id}"
       end)
     {[], state}
   end
@@ -273,8 +271,8 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   def handle_packet(msg, stash, state) do
-    Logger.warn "Unhandled packet from #{stash.identity.name} #{inspect msg}"
-    {[], state}
+    Logger.error "Unhandled packet from #{stash.identity.name} #{inspect msg}"
+    raise "unhandled packet"
   end
 
 end

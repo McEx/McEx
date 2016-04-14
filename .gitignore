@@ -17,5 +17,6 @@ Session.vim
 *.rlib
 *.dll
 *.exe
-/rs/target/
+/native/world/target/
+/native/chunk/target/
 /genbiome/target/

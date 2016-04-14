@@ -10,7 +10,7 @@ defmodule McEx.Mixfile do
      start_permanent: Mix.env == :prod,
      compilers: [:rustler] ++ Mix.compilers,
      deps: deps,
-     rustler_crates: ["rs"]]
+     rustler_crates: ["native/world", "native/chunk"]]
   end
 
   # Configuration for the OTP application
@@ -39,16 +39,8 @@ defmodule McEx.Mixfile do
      {:gproc, "~> 0.5.0"},
      {:uuid, "~> 1.1"},
      {:credo, "~> 0.3", only: [:dev, :test]},
-     {:mc_chunk, path: "../McChunk"},
-     {:mc_protocol, path: "../McProtocol"},
-     {:rustler, "~> 0.0.2"}]
-  end
-end
-
-defmodule Mix.Tasks.Compile.Native do
-  def run(_) do
-    if Mix.shell.cmd("cd rs; cargo build") != 0 do
-      raise Mix.Error, message: "could not build native libs. Make sure you have make and gcc installed."
-    end
+     {:mc_chunk, github: "McEx/McChunk", branch: "dev"},
+     {:mc_protocol, github: "McEx/McProtocol"},
+     {:rustler, "~> 0.0.5"}]
   end
 end

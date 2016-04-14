@@ -6,8 +6,8 @@ dependencies = [
  "gcc 0.3.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "opensimplex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustler 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustler_codegen 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustler 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustler_codegen 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "voxel_worldgen 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "rustler"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "lazy_static 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -121,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "rustler_codegen"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "aster 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
