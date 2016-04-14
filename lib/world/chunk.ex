@@ -43,7 +43,9 @@ defmodule McEx.Chunk do
       z: z,
       ground_up: true,
       bit_map: written_mask,
-      chunk_data: data,
+      # We convert the chunk data to a binary so that we prevent the entire iolist being
+      # sent by message. This will make a large binary, which will only be sent by reference.
+      chunk_data: IO.iodata_to_binary(data),
     }
   end
 

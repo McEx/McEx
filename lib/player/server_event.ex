@@ -89,7 +89,7 @@ defmodule McEx.Player.ServerEvent do
   def handle(:m, {:TEMP_set_crouch, eid, status}, state) do
     write_packet(state, %Packet.Server.Play.EntityMetadata{
       entity_id: eid,
-      metadata: [McProtocol.EntityMeta.Entity.status({false, status, false, false, false})]})
+      metadata: [{0, :byte, 0b10}]})
     state
   end
 

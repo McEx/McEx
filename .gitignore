@@ -2,6 +2,7 @@
 /deps
 erl_crash.dump
 *.ez
+mix.lock
 
 #vim
 [._]*.s[a-w][a-z]
