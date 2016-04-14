@@ -39,7 +39,7 @@ defmodule McEx.Mixfile do
      {:gproc, "~> 0.5.0"},
      {:uuid, "~> 1.1"},
      {:credo, "~> 0.3", only: [:dev, :test]},
-     {:mc_chunk, github: "McEx/McChunk", branch: "dev"},
+     {:mc_chunk, github: "McEx/McChunk"},
      {:mc_protocol, github: "McEx/McProtocol"},
      {:rustler, "~> 0.0.5"}]
   end
