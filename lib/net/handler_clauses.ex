@@ -45,21 +45,28 @@ defmodule McEx.Net.HandlerClauses do
          flags: 0,
          teleport_id: 0,
         }},
-      # {:send_packet,
-       # %Server.Play.SpawnEntityLiving{
-       #   entity_id: 1000,
-       #   type: 54,
-       #   x: 0,
-       #   y: 3200,
-       #   z: 0,
-       #   yaw: 0,
-       #   pitch: 0,
-       #   head_pitch: 0,
-       #   velocity_x: 0,
-       #   velocity_y: 0,
-       #   velocity_z: 0,
-       #   metadata: [],
-       # }},
+      {:send_packet,
+       %Server.Play.WindowItems{
+         window_id: 0, # player inventory
+         items: (for i <- 0..46, do: %McProtocol.DataTypes.Slot{id: 1, count: i}),
+        }},
+
+      {:send_packet,
+       %Server.Play.SpawnEntityLiving{
+         entity_id: 1000,
+         entity_uuid: McProtocol.UUID.uuid4,
+         type: 54,
+         x: 0,
+         y: 3200,
+         z: 0,
+         yaw: 0,
+         pitch: 0,
+         head_pitch: 0,
+         velocity_x: 0,
+         velocity_y: 0,
+         velocity_z: 0,
+         metadata: [],
+       }},
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
