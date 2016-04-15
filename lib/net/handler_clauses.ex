@@ -15,17 +15,18 @@ defmodule McEx.Net.HandlerClauses do
     # Hardcoded for now.
     world_id = :test_world
 
-    # TODO: This ruins multiplayer at the mement
-    respawn_transitions = McProtocol.Handler.Reset.respawn_into_world(
-      %{
-        game_mode: 0,
-        dimension: 0,
-        difficulty: 0,
-        level_type: "default",
-        reduced_debug_info: false,
-      }, stash)
+    entity_id = McEx.EntityIdGenerator.get_id(world_id)
 
-    transitions = respawn_transitions ++ [
+    transitions = [
+      {:send_packet,
+       %Server.Play.Login{
+         entity_id: entity_id,
+         game_mode: 0, #creative
+         dimension: 0, #overworld
+         difficulty: 0, #peaceful
+         max_players: 10,
+         level_type: "default",
+         reduced_debug_info: false}},
       {:send_packet,
        %Server.Play.SpawnPosition{
          location: {0, 100, 0}}},
@@ -74,9 +75,9 @@ defmodule McEx.Net.HandlerClauses do
       %{
         connection: stash.connection,
         identity: stash.identity,
+        entity_id: entity_id,
       }
     )
-    entity_id = McEx.Player.player_eid(player_server)
 
     # TODO: Handle player server crash
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})

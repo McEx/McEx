@@ -18,9 +18,6 @@ defmodule McEx.Net.SimpleOrchestrator do
     {McProtocol.Handler.Login, %{}, state}
   end
   def handle_next(McProtocol.Handler.Login, _, state) do
-    {McProtocol.Handler.Reset, %{}, state}
-  end
-  def handle_next(McProtocol.Handler.Reset, _, state) do
     {McEx.Net.Handler, %{}, state}
   end
 

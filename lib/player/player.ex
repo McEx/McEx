@@ -6,6 +6,7 @@ defmodule McEx.Player do
 
   @type startup_options :: %{
     connection: term,
+    entity_id: any,
     user: {boolean, String.t, %McProtocol.UUID{}},
   }
 
@@ -85,11 +86,9 @@ defmodule McEx.Player do
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 
-    entity_id = McEx.EntityIdGenerator.get_id(world_id)
-
     state = %PlayerState{
       connection: options.connection,
-      eid: entity_id,
+      eid: options.entity_id,
       authed: authed,
       name: name,
       uuid: uuid,
