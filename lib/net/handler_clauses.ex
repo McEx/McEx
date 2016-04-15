@@ -16,6 +16,16 @@ defmodule McEx.Net.HandlerClauses do
     world_id = :test_world
 
     entity_id = McEx.EntityIdGenerator.get_id(world_id)
+    #entity_id = 0
+
+    #respawn_transitions = McProtocol.Handler.Reset.respawn_into_world(
+    #  %{
+    #    game_mode: 0,
+    #    dimension: 0,
+    #    difficulty: 0,
+    #    level_type: "default",
+    #    reduced_debug_info: false,
+    #  }, stash)
 
     transitions = [
       {:send_packet,
@@ -57,7 +67,7 @@ defmodule McEx.Net.HandlerClauses do
          entity_uuid: McProtocol.UUID.uuid4,
          type: 54,
          x: 0,
-         y: 3200,
+         y: 110,
          z: 0,
          yaw: 0,
          pitch: 0,

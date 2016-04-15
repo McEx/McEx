@@ -18,6 +18,9 @@ defmodule McEx.Net.SimpleOrchestrator do
     {:reply, {McProtocol.Handler.Login, %{}}, state}
   end
   def handle_call({:next, {McProtocol.Handler.Login, _}}, _from, state) do
+  #  {:reply, {McProtocol.Handler.Reset, %{}}, state}
+  #end
+  #def handle_call({:next, {McProtocol.Handler.Reset, _}}, _from, state) do
     {:reply, {McEx.Net.Handler, %{}}, state}
   end
 

@@ -28,10 +28,6 @@ end
 
 defmodule McEx.EntityIdGenerator do
   use GenServer
-  # TODO: Should be removed and replaced with entity id mapping closer to connection.
-  # To fully support world/server switching, we need a way for entity ids to be per-connection,
-  # at least for proxies. While we do this, we might as well go all the way and use the same logic
-  # for McEx, and simplify the entity system in the process.
 
   def start_link(world_id) do
     GenServer.start_link(__MODULE__, world_id)
@@ -43,6 +39,9 @@ defmodule McEx.EntityIdGenerator do
 
   def init(server_id) do
     McEx.Registry.reg_world_service(server_id, :entity_id_generator)
+    # Because of the handler system on the connection, the client is ALWAYS entity id
+    # 0. Entity id 0 is therefore reserved, and should not be used for anything
+    # globally.
     {:ok, 1}
   end
 
