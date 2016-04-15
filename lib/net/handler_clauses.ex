@@ -167,10 +167,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.HeldItemSlot{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_held_item, msg.slot_id})
-    {[], state}
-  end
 
   def handle_packet(%Client.Play.ArmAnimation{}, stash, state) do
     Player.client_event(state.player, {:action_punch_animation})
@@ -202,16 +198,22 @@ defmodule McEx.Net.HandlerClauses do
     Player.client_event(state.player, {:window_close, msg.window_id})
     {[], state}
   end
-  def handle_packet(%Client.Play.WindowClick{}, stash, state) do
-    # TODO: apply click to inventory
+  def handle_packet(%Client.Play.WindowClick{} = msg, stash, state) do
+    # TODO: Change this?
+    Player.client_event(state.player, {:window_action, msg})
     {[], state}
   end
-  def handle_packet(%Client.Play.Transaction{}, stash, state) do
-    # can be ignored until we do cheat detection
+  def handle_packet(%Client.Play.Transaction{} = msg, stash, state) do
+    message = {:window_transaction, msg.window_id, msg.action, msg.accepted}
+    Player.client_event(state.player, message)
     {[], state}
   end
   def handle_packet(%Client.Play.SetCreativeSlot{} = msg, stash, state) do
-    Player.client_event(state.player, {:window_creative_set_slot, msg.slot, msg.item})
+    Player.client_event(state.player, {:creative_set_slot, msg.slot, msg.item})
+    {[], state}
+  end
+  def handle_packet(%Client.Play.HeldItemSlot{} = msg, stash, state) do
+    Player.client_event(state.player, {:set_held_item, msg.slot_id})
     {[], state}
   end
   def handle_packet(%Client.Play.EnchantItem{} = msg, stash, state) do

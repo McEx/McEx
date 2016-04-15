@@ -71,6 +71,28 @@ defmodule McEx.Player.ClientEvent do
     end
   end
 
+  # Inventory message delegates
+  def handle({:window_close, _window_id} = msg, state) do
+    McEx.Player.Inventory.action(state.inventory_pid, msg)
+    state
+  end
+  def handle({:window_click, _msg} = msg, state) do
+    McEx.Player.Inventory.action(state.inventory_pid, msg)
+    state
+  end
+  def handle({:window_transaction, _window_id, _action, _accepted} = msg, state) do
+    McEx.Player.Inventory.action(state.inventory_pid, msg)
+    state
+  end
+  def handle({:creative_set_slot, _slot, _item} = msg, state) do
+    McEx.Player.Inventory.action(state.inventory_pid, msg)
+    state
+  end
+  def handle({:set_held_item, _slot} = msg, state) do
+    McEx.Player.Inventory.action(state.inventory_pid, msg)
+    state
+  end
+
   def handle(event, state) do
     IO.inspect event
     state

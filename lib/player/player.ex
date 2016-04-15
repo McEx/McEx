@@ -45,6 +45,7 @@ defmodule McEx.Player do
         client_settings: %ClientSettings{},
         loaded_chunks: HashSet.new,
         world_id: nil,
+        inventory_pid: nil,
         tracked_players: [])
   end
   defmodule PlayerListInfo do
@@ -86,6 +87,11 @@ defmodule McEx.Player do
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 
+    {:ok, inventory_pid} = McEx.Player.Inventory.start_link(
+      %{
+        player_pid: self,
+      })
+
     state = %PlayerState{
       connection: options.connection,
       eid: options.entity_id,
@@ -93,6 +99,7 @@ defmodule McEx.Player do
       name: name,
       uuid: uuid,
       world_id: world_id,
+      inventory_pid: inventory_pid,
     }
 
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
