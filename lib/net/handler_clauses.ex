@@ -131,21 +131,30 @@ defmodule McEx.Net.HandlerClauses do
         2 -> {:action_digging, :finished, msg.location, msg.face}
         3 -> {:action_drop_item, :stack}
         4 -> {:action_drop_item, :single}
-        5 -> {:action_use_item, false}
+        5 -> {:action_deactivate_item}
         6 -> {:action_swap_item}
         status -> raise "unexpected block dig status: #{status}"
       end)
     {[], state}
   end
 
+  def handle_packet(%Client.Play.UseItem{hand: hand}, stash, state) do
+    hand = if hand == 0, do: :main_hand, else: :off_hand # or just pass the hand nr
+    Player.client_event(state.player, {:action_activate_item, hand})
+    {[], state}
+  end
   def handle_packet(
         %Client.Play.BlockPlace{location: {:pos, -1, 255, -1}, direction: -1},
         stash, state) do
-    Player.client_event(state.player, {:action_use_item, true})
+    # there is UseItem now in 1.9, (when) is this used? what hand/item gets activated?
+    raise "BlockPlace used for activating an item, investigate"
+    Player.client_event(state.player, {:action_activate_item, nil})
     {[], state}
   end
-  def handle_packet(%Client.Play.BlockPlace{} = msg, stash, state) do
-    message = {:action_place_block, msg.location, msg.direction, msg.held_item,
+  def handle_packet(%Client.Play.BlockPlace{direction: direction} = msg,
+        stash, state) when direction >= 0 and direction < 6 do
+    hand = if msg.hand == 0, do: :main_hand, else: :off_hand # or just pass the hand nr
+    message = {:action_place_block, msg.location, direction, hand,
                {msg.cursor_x, msg.cursor_y, msg.cursor_z}}
     Player.client_event(state.player, message)
     {[], state}
