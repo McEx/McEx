@@ -15,28 +15,17 @@ defmodule McEx.Net.HandlerClauses do
     # Hardcoded for now.
     world_id = :test_world
 
-    entity_id = McEx.EntityIdGenerator.get_id(world_id)
-    #entity_id = 0
+    # TODO: This ruins multiplayer at the mement
+    respawn_transitions = McProtocol.Handler.Reset.respawn_into_world(
+      %{
+        game_mode: 0,
+        dimension: 0,
+        difficulty: 0,
+        level_type: "default",
+        reduced_debug_info: false,
+      }, stash)
 
-    #respawn_transitions = McProtocol.Handler.Reset.respawn_into_world(
-    #  %{
-    #    game_mode: 0,
-    #    dimension: 0,
-    #    difficulty: 0,
-    #    level_type: "default",
-    #    reduced_debug_info: false,
-    #  }, stash)
-
-    transitions = [
-      {:send_packet,
-       %Server.Play.Login{
-         entity_id: entity_id,
-         game_mode: 0, #creative
-         dimension: 0, #overworld
-         difficulty: 0, #peaceful
-         max_players: 10,
-         level_type: "default",
-         reduced_debug_info: false}},
+    transitions = respawn_transitions ++ [
       {:send_packet,
        %Server.Play.SpawnPosition{
          location: {0, 100, 0}}},
@@ -85,9 +74,9 @@ defmodule McEx.Net.HandlerClauses do
       %{
         connection: stash.connection,
         identity: stash.identity,
-        entity_id: entity_id,
       }
     )
+    entity_id = McEx.Player.player_eid(player_server)
 
     # TODO: Handle player server crash
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
@@ -187,16 +176,16 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.EntityAction{entity_id: eid} = msg, stash, %{entity_id: eid} = state) do
+  def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
     Player.client_event(state.player,
       case msg.action_id do
-        0 -> {:player_set_crouch, eid, true}
-        1 -> {:player_set_crouch, eid, false}
-        2 -> {:player_bed_leave, eid}
-        3 -> {:player_set_sprint, eid, true}
-        4 -> {:player_set_sprint, eid, false}
-        5 -> {:player_horse_jump, eid, msg.jump_boost}
-        6 -> {:player_open_inventory, eid}
+        0 -> {:player_set_crouch, true}
+        1 -> {:player_set_crouch, false}
+        2 -> :player_bed_leave
+        3 -> {:player_set_sprint, true}
+        4 -> {:player_set_sprint, false}
+        5 -> {:player_horse_jump, msg.jump_boost}
+        6 -> :player_open_inventory
         action_id -> raise "unknown entity action: #{action_id}"
       end)
     {[], state}

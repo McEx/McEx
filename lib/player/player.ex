@@ -6,7 +6,6 @@ defmodule McEx.Player do
 
   @type startup_options :: %{
     connection: term,
-    entity_id: integer,
     user: {boolean, String.t, %McProtocol.UUID{}},
   }
 
@@ -67,6 +66,10 @@ defmodule McEx.Player do
     GenServer.cast(server, {:client_event, data})
   end
 
+  def player_eid(server) do
+    GenServer.call(server, :get_entity_id)
+  end
+
   def make_player_list_record(state) do
     %McEx.World.PlayerTracker.PlayerListRecord {
       eid: state.eid,
@@ -82,9 +85,11 @@ defmodule McEx.Player do
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 
+    entity_id = McEx.EntityIdGenerator.get_id(world_id)
+
     state = %PlayerState{
       connection: options.connection,
-      eid: options.entity_id,
+      eid: entity_id,
       authed: authed,
       name: name,
       uuid: uuid,
@@ -94,6 +99,10 @@ defmodule McEx.Player do
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 
     {:ok, state}
+  end
+
+  def handle_call(:get_entity_id, _from, state) do
+    {:reply, state.eid, state}
   end
 
   @doc "Calls the handler for the event we just received from the client."

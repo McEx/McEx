@@ -56,7 +56,7 @@ defmodule McEx.Player.ClientEvent do
     state
   end
 
-  def handle({:player_set_crouch, _, status}, state) do
+  def handle({:player_set_crouch, status}, state) do
     bcast_players_sev(state.world_id, {:TEMP_set_crouch, state.eid, status})
     state
   end
