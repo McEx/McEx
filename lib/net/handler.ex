@@ -37,6 +37,8 @@ defmodule McEx.Net.Handler do
   def handle_call({:handle, packet_data, stash}, _from,  state) do
     packet_data = packet_data |> McProtocol.Packet.In.fetch_packet
 
+    McEx.Player.client_packet(state.player, packet_data.packet)
+
     unless [
         McProtocol.Packet.Client.Play.Settings,
         McProtocol.Packet.Client.Play.CustomPayload,

@@ -113,23 +113,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.Flying{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_on_ground, msg.on_ground})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.Position{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_pos, {:pos, msg.x, msg.y, msg.z}, msg.on_ground})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.Look{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_look, {:look, msg.yaw, msg.pitch}, msg.on_ground})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.PositionLook{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_pos_look, {:pos, msg.x, msg.y, msg.z}, {:look, msg.yaw, msg.pitch}, msg.on_ground})
-    {[], state}
-  end
-
   def handle_packet(%Client.Play.BlockDig{} = msg, stash, state) do
     Player.client_event(state.player,
       case msg.status do
@@ -194,33 +177,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.CloseWindow{} = msg, stash, state) do
-    Player.client_event(state.player, {:window_close, msg.window_id})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.WindowClick{} = msg, stash, state) do
-    # TODO: Change this?
-    Player.client_event(state.player, {:window_action, msg})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.Transaction{} = msg, stash, state) do
-    message = {:window_transaction, msg.window_id, msg.action, msg.accepted}
-    Player.client_event(state.player, message)
-    {[], state}
-  end
-  def handle_packet(%Client.Play.SetCreativeSlot{} = msg, stash, state) do
-    Player.client_event(state.player, {:creative_set_slot, msg.slot, msg.item})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.HeldItemSlot{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_held_item, msg.slot_id})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.EnchantItem{} = msg, stash, state) do
-    Player.client_event(state.player, {:window_enchant_item, msg.window_id, msg.enchantment})
-    {[], state}
-  end
-
   def handle_packet(%Client.Play.UpdateSign{} = msg, stash, state) do
     message = {:action_update_sign, msg.location,
                {msg.line_1, msg.line_2, msg.line_3, msg.line_4}}
@@ -236,29 +192,6 @@ defmodule McEx.Net.HandlerClauses do
 
   def handle_packet(%Client.Play.TabComplete{} = msg, stash, state) do
     Player.client_event(state.player, {:action_chat_tab_complete, msg.text, msg.block})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.Settings{} = msg, stash, state) do
-    <<cape::1, jacket::1, left_sleeve::1, right_sleeve::1, left_pants::1, right_pants::1, hat::1, _::1>> = <<msg.skin_parts::unsigned-integer-1*8>>
-
-    Player.client_events(state.player, [
-      {:set_locale, msg.locale},
-      {:set_view_distance, msg.view_distance},
-      {:set_chat_mode, case msg.chat_flags do
-        0 -> :enabled
-        1 -> :commands
-        2 -> :hidden
-      end},
-      {:set_chat_colors, msg.chat_colors},
-      {:set_skin_parts, %McEx.Player.ClientSettings.SkinParts{
-        cape: cape == 1,
-        jacket: jacket == 1,
-        left_sleeve: left_sleeve == 1,
-        right_sleeve: right_sleeve == 1,
-        left_pants: left_pants == 1,
-        right_pants: right_pants == 1}}])
-
     {[], state}
   end
 
@@ -288,8 +221,9 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   def handle_packet(msg, stash, state) do
-    Logger.error "Unhandled packet from #{stash.identity.name} #{inspect msg}"
-    raise "unhandled packet"
+    #Logger.error "Unhandled packet from #{stash.identity.name} #{inspect msg}"
+    #raise "unhandled packet"
+    {[], state}
   end
 
 end

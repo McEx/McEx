@@ -10,25 +10,34 @@ defmodule McEx.Player do
     user: {boolean, String.t, %McProtocol.UUID{}},
   }
 
-  defmodule PlayerLook, do: defstruct(yaw: 0, pitch: 0)
+  @properties [
+    McEx.Player.Property.Movement,
+    McEx.Player.Property.Chunks,
+    McEx.Player.Property.ClientSettings,
+    McEx.Player.Property.Inventory,
+  ]
 
-  defmodule ClientSettings do
-    defmodule SkinParts do
-      defstruct(
-          cape: true,
-          jacket: true,
-          left_sleeve: true,
-          right_sleeve: true,
-          left_pants: true,
-          right_pants: true,
-          hat: true)
-    end
-    defstruct(
-        locale: "en_GB",
-        view_distance: 8,
-        chat_mode: :enabled,
-        chat_colors: true,
-        skin_parts: nil)
+  def initial_properties do
+    @properties
+    |> Enum.map(fn mod -> {mod, apply(mod, :initial, [])} end)
+    |> Enum.into(%{})
+  end
+
+  def client_packet(pid, packet) do
+    GenServer.cast(pid, {:client_packet, packet})
+  end
+  def handle_cast({:client_packet, packet}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_client_packet, [packet, state])
+    end)
+    {:noreply, state}
+  end
+
+  def handle_info({:entity_event, eid, event_id, value}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_entity_event, [eid, event_id, value, state])
+    end)
+    {:noreply, state}
   end
 
   defmodule PlayerState do
@@ -39,14 +48,9 @@ defmodule McEx.Player do
         name: nil,
         uuid: nil,
         connection: nil,
-        position: {:pos, 0, 100, 0},
-        look: %PlayerLook{},
-        on_ground: true,
-        client_settings: %ClientSettings{},
-        loaded_chunks: HashSet.new,
         world_id: nil,
-        inventory_pid: nil,
-        tracked_players: [])
+        properties: nil,
+    )
   end
   defmodule PlayerListInfo do
     defstruct(name: nil, uuid: nil)
@@ -87,11 +91,6 @@ defmodule McEx.Player do
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 
-    {:ok, inventory_pid} = McEx.Player.Inventory.start_link(
-      %{
-        player_pid: self,
-      })
-
     state = %PlayerState{
       connection: options.connection,
       eid: options.entity_id,
@@ -99,7 +98,7 @@ defmodule McEx.Player do
       name: name,
       uuid: uuid,
       world_id: world_id,
-      inventory_pid: inventory_pid,
+      properties: initial_properties,
     }
 
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
