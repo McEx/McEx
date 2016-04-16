@@ -10,7 +10,7 @@ defmodule McEx.Net.SimpleOrchestrator do
     {McProtocol.Handler.Handshake, %{}, state}
   end
   def handle_next(McProtocol.Handler.Handshake, :Status, state) do
-    # TODO: get actual (max) nr of players do
+    # TODO: get actual (max) nr of players
     args = %{response: McEx.ServerListResponse.build(123, 42)}
     {McProtocol.Handler.Status, args, state}
   end
