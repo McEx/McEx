@@ -102,7 +102,7 @@ defmodule McEx.Net.HandlerClauses do
   end
   def handle_packet(%Client.Play.UseEntity{} = msg, stash, state) do
     Player.client_event(state.player,
-      case msg.type do
+      case msg.mouse do
         0 -> {:entity_interact, msg.target}
         1 -> {:entity_attack, msg.target}
         2 -> {:entity_interact_at, msg.target, {:pos, msg.x, msg.y, msg.z}}
