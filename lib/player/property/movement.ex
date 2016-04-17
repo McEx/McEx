@@ -79,7 +79,7 @@ defmodule McEx.Player.Property.Movement do
   end
 
   def delta_pos_to_short({:rel_pos, dx, dy, dz}),
-  do: {:rel_pos_short, round(dx*32), round(dy*32), round(dz*32)}
+  do: {:rel_pos_short, round(dx*4096), round(dy*4096), round(dz*4096)}
   def deg_to_byte(deg), do: round(deg / 360 * 256)
 
   # Send movement update of event to the client
