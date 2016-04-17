@@ -30,7 +30,8 @@ defmodule McEx.Player.Property.Chunks do
   def load_chunk(state, chunk_manager, chunk_pos) do
     McEx.Chunk.Manager.lock_chunk(chunk_manager, chunk_pos, self)
     {:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_manager, chunk_pos)
-    McEx.Chunk.send_chunk(chunk, state.connection)
+    ret = McEx.Chunk.send_chunk(chunk, state.connection)
+    ret
   end
   def unload_chunk(state, chunk_manager, chunk_pos) do
     McEx.Chunk.Manager.release_chunk(chunk_manager, chunk_pos, self)
@@ -48,6 +49,7 @@ defmodule McEx.Player.Property.Chunks do
     chunk_manager = McEx.Registry.world_service_pid(state.world_id, :chunk_manager)
 
     chunk_load_list = get_chunks_in_view(pos, view_distance)
+
     loaded_chunks = Enum.reduce(chunk_load_list, prop.loaded_chunks, fn
       element, loaded ->
       if MapSet.member?(loaded, element) do
@@ -57,6 +59,7 @@ defmodule McEx.Player.Property.Chunks do
         MapSet.put(loaded, element)
       end
     end)
+
     loaded_chunks = Enum.into(Enum.filter(loaded_chunks, fn
           element ->
           if Enum.member?(chunk_load_list, element) do
@@ -78,6 +81,7 @@ defmodule McEx.Player.Property.Chunks do
     # xz-plane, we do a chunk load.
     if prop.last_pos == nil or Pos.manhattan_xz_distance(pos, prop.last_pos) > 8 do
       prop = load_chunks(state, pos, 20, prop)
+      prop = %{prop | last_pos: pos}
       set_prop(state, prop)
     else
       state

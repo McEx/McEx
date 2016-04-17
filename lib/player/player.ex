@@ -16,6 +16,7 @@ defmodule McEx.Player do
     McEx.Player.Property.PlayerList,
     McEx.Player.Property.ClientSettings,
     McEx.Player.Property.Chunks,
+    McEx.Player.Property.BlockInteract,
     McEx.Player.Property.Inventory,
   ]
 
@@ -143,15 +144,5 @@ defmodule McEx.Player do
     Logger.info("User #{name} left the server")
     Logger.debug("reason: #{inspect reason}")
     {:stop, :normal, state}
-  end
-
-  def handle_info({:block, :destroy, pos}, state) do
-    McProtocol.Acceptor.ProtocolState.Connection.write_packet(
-      state.connection,
-      %Packet.Server.Play.BlockChange{
-        location: pos,
-        type: 0,
-      })
-    {:noreply, state}
   end
 end

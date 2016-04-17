@@ -77,21 +77,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.BlockDig{} = msg, stash, state) do
-    Player.client_event(state.player,
-      case msg.status do
-        0 -> {:action_digging, :started, msg.location, msg.face}
-        1 -> {:action_digging, :cancelled, msg.location, msg.face}
-        2 -> {:action_digging, :finished, msg.location, msg.face}
-        3 -> {:action_drop_item, :stack}
-        4 -> {:action_drop_item, :single}
-        5 -> {:action_deactivate_item}
-        6 -> {:action_swap_item}
-        status -> raise "unexpected block dig status: #{status}"
-      end)
-    {[], state}
-  end
-
   def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
     Player.client_event(state.player,
       case msg.action_id do

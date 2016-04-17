@@ -17,10 +17,14 @@ defmodule McEx.Chunk do
 
   def init({world_id, pos}) do
     McEx.Registry.reg_chunk_server(world_id, pos)
-    chunk = gen_chunk(pos)
+
+    # Do actual chunk generation outside of init.
+    # This prevents us from blocking for longer than is needed.
+    GenServer.cast(self, :gen_chunk)
+
     {:ok, %{
         world_id: world_id,
-        chunk_resource: chunk,
+        chunk_resource: nil,
         pos: pos}}
   end
 
@@ -60,9 +64,14 @@ defmodule McEx.Chunk do
   def handle_cast({:block_destroy, {x, y, z}}, state) do
     Chunk.set_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)}, 0)
 
-    message = {:block, :destroy, {x, y, z}}
+    #message = {:block, :destroy, {x, y, z}}
+    message = {:world_event, :chunk, {:block_destroy, {x, y, z}}}
     McEx.Registry.world_players_send(state.world_id, message)
 
     {:noreply, state}
+  end
+  def handle_cast(:gen_chunk, state) do
+    chunk = gen_chunk(state.pos)
+    {:noreply, %{state | chunk_resource: chunk}}
   end
 end
