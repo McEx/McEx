@@ -21,3 +21,7 @@ Session.vim
 /native/world/target/
 /native/chunk/target/
 /genbiome/target/
+
+/dumps
+/logs
+
