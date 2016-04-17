@@ -25,25 +25,13 @@ defmodule McEx.Net.HandlerClauses do
          difficulty: 0, #peaceful
          max_players: 10,
          level_type: "default",
-        reduced_debug_info: false,
+         reduced_debug_info: false,
         }},
-      {:send_packet, %Server.Play.SpawnPosition{
-         location: {0, 100, 0}}},
       {:send_packet, %Server.Play.Abilities{
          flags: 0b11111111,
          flying_speed: 0.1,
         walking_speed: 0.2,
         }},
-      {:send_packet, %Server.Play.Position{
-         x: 0,
-         y: 100,
-         z: 0,
-         yaw: 0,
-         pitch: 0,
-         flags: 0,
-         teleport_id: 0,
-        }},
-
       {:send_packet, %Server.Play.SpawnEntityLiving{
          entity_id: 1000,
          entity_uuid: McProtocol.UUID.uuid4,
@@ -84,10 +72,6 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   # Play
-  def handle_packet(%Client.Play.KeepAlive{} = msg, stash, state) do
-    Player.client_event(state.player, {:keep_alive, msg.keep_alive_id})
-    {[], state}
-  end
   def handle_packet(%Client.Play.Chat{} = msg, stash, state) do
     Player.client_event(state.player, {:action_chat, msg.message})
     {[], state}

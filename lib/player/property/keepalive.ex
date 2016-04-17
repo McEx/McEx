@@ -3,7 +3,7 @@ defmodule McEx.Player.Property.Keepalive do
 
   alias McProtocol.Packet.{Client, Server}
 
-  def initial do
+  def initial(_state) do
     %{
       current_nonce: nil,
       missed: 0,

@@ -9,6 +9,16 @@ defmodule McEx.Player.Property.Movement do
   do: {:rel_pos, 0, 0, 0}
 
   def initial(state) do
+    write_client_packet(state, %Server.Play.SpawnPosition{location: {0, 100, 0}})
+
+    packet = %Server.Play.Position{
+      x: 0, y: 100, z: 0,
+      yaw: 0, pitch: 0,
+      flags: 0,
+      teleport_id: 0,
+    }
+    write_client_packet(state, packet)
+
     %{
       pos: {:pos, 0, 100, 0},
       look: {:look, 0, 0},

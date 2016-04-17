@@ -4,7 +4,7 @@ defmodule McEx.Player.Property.Chunks do
 
   alias McProtocol.Packet.Server
 
-  def initial(state) do
+  def initial(_state) do
     %{
       last_pos: nil,
       loaded_chunks: MapSet.new,
