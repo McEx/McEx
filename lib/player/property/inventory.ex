@@ -3,7 +3,7 @@ defmodule McEx.Player.Property.Inventory do
 
   alias McProtocol.Packet.{Client, Server}
 
-  def initial do
+  def initial(state) do
     nil
   end
 
