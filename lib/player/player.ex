@@ -11,9 +11,10 @@ defmodule McEx.Player do
   }
 
   @properties [
+    McEx.Player.Property.Keepalive,
     McEx.Player.Property.Movement,
-    McEx.Player.Property.Chunks,
     McEx.Player.Property.ClientSettings,
+    McEx.Player.Property.Chunks,
     McEx.Player.Property.Inventory,
   ]
 
@@ -36,6 +37,12 @@ defmodule McEx.Player do
   def handle_info({:entity_event, eid, event_id, value}, state) do
     state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
       apply(mod, :handle_entity_event, [eid, event_id, value, state])
+    end)
+    {:noreply, state}
+  end
+  def handle_info({:world_event, event_id, args}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_world_event, [event_id, args, state])
     end)
     {:noreply, state}
   end

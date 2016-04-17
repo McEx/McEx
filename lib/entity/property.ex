@@ -2,12 +2,14 @@ defmodule McEx.Entity.Property do
 
   @callback initial :: any
   @callback handle_client_packet(struct, map) :: map
+  @callback handle_world_event(atom, any, map) :: map
   @callback handle_entity_event(integer, atom, any, map) :: map
 
   defmacro __before_compile__(_env) do
     quote do
       def handle_client_packet(_, state), do: state
       def handle_entity_event(_, _, _, state), do: state
+      def handle_world_event(_, _, state), do: state
     end
   end
 

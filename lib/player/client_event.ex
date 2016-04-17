@@ -25,16 +25,6 @@ defmodule McEx.Player.ClientEvent do
     state
   end
 
-  @doc "Other part in Player.ServerEvent.handle_info({:server_event, {:keep_alive"
-  def handle({:keep_alive, nonce}, state) do
-    {sent_nonce, _} = state.keepalive_state
-    if nonce == sent_nonce do
-      put_in state.keepalive_state, nil
-    else
-      {:stop, :bad_keep_alive, state}
-    end
-  end
-
   def handle(event, state) do
     IO.inspect event
     state
