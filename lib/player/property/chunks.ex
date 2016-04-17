@@ -80,7 +80,7 @@ defmodule McEx.Player.Property.Chunks do
     # If we have moved more than 8 blocks away from the last chunk load on the
     # xz-plane, we do a chunk load.
     if prop.last_pos == nil or Pos.manhattan_xz_distance(pos, prop.last_pos) > 8 do
-      prop = load_chunks(state, pos, 20, prop)
+      prop = load_chunks(state, pos, 2, prop)
       prop = %{prop | last_pos: pos}
       set_prop(state, prop)
     else
