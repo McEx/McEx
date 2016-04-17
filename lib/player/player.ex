@@ -60,9 +60,6 @@ defmodule McEx.Player do
         properties: nil,
     )
   end
-  defmodule PlayerListInfo do
-    defstruct(name: nil, uuid: nil)
-  end
 
   @spec start_link(term, startup_options) :: GenServer.on_start
   def start_link(world_id, options) do

@@ -76,18 +76,6 @@ defmodule McEx.Net.HandlerClauses do
     Player.client_event(state.player, {:action_chat, msg.message})
     {[], state}
   end
-  def handle_packet(%Client.Play.UseEntity{} = msg, stash, state) do
-    Player.client_event(state.player,
-      case msg.mouse do
-        0 -> {:entity_interact, msg.target}
-        1 -> {:entity_attack, msg.target}
-        2 -> {:entity_interact_at, msg.target, {:pos, msg.x, msg.y, msg.z}}
-      end)
-    {[], state}
-  end
-  def handle_packet(%Client.Play.TeleportConfirm{} = msg, stash, state) do
-    {[], state}
-  end
 
   def handle_packet(%Client.Play.BlockDig{} = msg, stash, state) do
     Player.client_event(state.player,
@@ -104,33 +92,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-  def handle_packet(%Client.Play.UseItem{hand: hand}, stash, state) do
-    hand = if hand == 0, do: :main_hand, else: :off_hand # or just pass the hand nr
-    Player.client_event(state.player, {:action_activate_item, hand})
-    {[], state}
-  end
-  def handle_packet(
-        %Client.Play.BlockPlace{location: {:pos, -1, 255, -1}, direction: -1},
-        stash, state) do
-    # there is UseItem now in 1.9, (when) is this used? what hand/item gets activated?
-    raise "BlockPlace used for activating an item, investigate"
-    Player.client_event(state.player, {:action_activate_item, nil})
-    {[], state}
-  end
-  def handle_packet(%Client.Play.BlockPlace{direction: direction} = msg,
-        stash, state) when direction >= 0 and direction < 6 do
-    hand = if msg.hand == 0, do: :main_hand, else: :off_hand # or just pass the hand nr
-    message = {:action_place_block, msg.location, direction, hand,
-               {msg.cursor_x, msg.cursor_y, msg.cursor_z}}
-    Player.client_event(state.player, message)
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.ArmAnimation{}, stash, state) do
-    Player.client_event(state.player, {:action_punch_animation})
-    {[], state}
-  end
-
   def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
     Player.client_event(state.player,
       case msg.action_id do
@@ -143,55 +104,6 @@ defmodule McEx.Net.HandlerClauses do
         6 -> :player_open_inventory
         action_id -> raise "unknown entity action: #{action_id}"
       end)
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.SteerVehicle{} = msg, stash, state) do
-    #TODO: Flags
-    Player.client_event(state.player, {:set_vehicle_steer, msg.sideways, msg.forward})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.UpdateSign{} = msg, stash, state) do
-    message = {:action_update_sign, msg.location,
-               {msg.line_1, msg.line_2, msg.line_3, msg.line_4}}
-    Player.client_event(state.player, message)
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.Abilities{} = msg, stash, state) do
-    <<_::6, is_flying::1, _::1>> = <<msg.flags::unsigned-integer-1*8>>
-    Player.client_event(state.player, {:set_flying, is_flying == 1})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.TabComplete{} = msg, stash, state) do
-    Player.client_event(state.player, {:action_chat_tab_complete, msg.text, msg.block})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.ClientCommand{} = msg, stash, state) do
-    Player.client_event(state.player,
-      case msg.action_id do
-        0 -> {:action_respawn}
-        1 -> {:stats_request}
-        2 -> {:stats_achievement, :taking_inventory}
-      end)
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.CustomPayload{} = msg, stash, state) do
-    Player.client_event(state.player, {:plugin_message, msg.channel, msg.data})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.Spectate{} = msg, stash, state) do
-    Player.client_event(state.player, {:set_spectate, msg.target_player})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.ResourcePackReceive{} = msg, stash, state) do
-    Player.client_event(state.player, {:action_resource_pack_status, msg.hash, msg.result})
     {[], state}
   end
 
