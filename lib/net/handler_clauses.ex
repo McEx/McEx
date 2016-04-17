@@ -1,15 +1,7 @@
 defmodule McEx.Net.HandlerClauses do
   alias McEx.Player
-  alias McEx.Net.LegacyProtocolHandler.HandlerState
-  alias McEx.Net.ConnectionNew.State
-  alias McProtocol.Packet.Client
-  alias McProtocol.Packet.Server
+  alias McProtocol.Packet.{Server, Server}
   require Logger
-
-  def write_packet(packet, stash) do
-    McProtocol.Acceptor.ProtocolState.Connection.write_packet(stash.connection, packet)
-    stash
-  end
 
   def join(stash, state) do
     # Hardcoded for now.
@@ -69,31 +61,6 @@ defmodule McEx.Net.HandlerClauses do
        }
 
     {transitions, state}
-  end
-
-  # Play
-  def handle_packet(%Client.Play.Chat{} = msg, stash, state) do
-    Player.client_event(state.player, {:action_chat, msg.message})
-    {[], state}
-  end
-
-  def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
-    Player.client_event(state.player,
-      case msg.action_id do
-        0 -> {:player_set_crouch, true} # TODO this does not set crouch when in a vehicle
-        1 -> {:player_set_crouch, false}
-        2 -> :player_bed_leave
-        3 -> {:player_set_sprint, true}
-        4 -> {:player_set_sprint, false}
-        5 -> {:player_horse_jump, msg.jump_boost}
-        6 -> :player_open_inventory
-        action_id -> raise "unknown entity action: #{action_id}"
-      end)
-    {[], state}
-  end
-
-  def handle_packet(msg, stash, state) do
-    {[], state}
   end
 
 end

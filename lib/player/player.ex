@@ -2,7 +2,6 @@ defmodule McEx.Player do
   use GenServer
   use McEx.Util
   require Logger
-  alias McProtocol.Packet
 
   @type startup_options :: %{
     connection: term,
@@ -29,25 +28,6 @@ defmodule McEx.Player do
   def client_packet(pid, packet) do
     GenServer.cast(pid, {:client_packet, packet})
   end
-  def handle_cast({:client_packet, packet}, state) do
-    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_client_packet, [packet, state])
-    end)
-    {:noreply, state}
-  end
-
-  def handle_info({:entity_event, eid, event_id, value}, state) do
-    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_entity_event, [eid, event_id, value, state])
-    end)
-    {:noreply, state}
-  end
-  def handle_info({:world_event, event_id, args}, state) do
-    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_world_event, [event_id, args, state])
-    end)
-    {:noreply, state}
-  end
 
   defmodule PlayerState do
     defstruct(
@@ -73,7 +53,7 @@ defmodule McEx.Player do
     client_events(server, events)
   end
 
-  def client_event(server, nil), do: nil
+  def client_event(_server, nil), do: nil
   def client_event(server, data) do
     GenServer.cast(server, {:client_event, data})
   end
@@ -117,27 +97,24 @@ defmodule McEx.Player do
     {:reply, state.eid, state}
   end
 
-  @doc "Calls the handler for the event we just received from the client."
-  def handle_cast({:client_event, event}, state) do
-    case McEx.Player.ClientEvent.handle(event, state) do
-      {:stop, _, _} = response -> response
-      state -> {:noreply, state}
-    end
+  def handle_cast({:client_packet, packet}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_client_packet, [packet, state])
+    end)
+    {:noreply, state}
   end
 
-  @doc "Calls the handler for the event we just received from some other process on the server."
-  def handle_cast({:server_event, event}, state) do
-    case McEx.Player.ServerEvent.handle(:c, event, state) do
-      {:stop, _, _} = response -> response
-      state -> {:noreply, state}
-    end
+  def handle_info({:entity_event, eid, event_id, value}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_entity_event, [eid, event_id, value, state])
+    end)
+    {:noreply, state}
   end
-  @doc "Calls the handler for the event we just received from some other process on the server."
-  def handle_info({:server_event, event}, state) do
-    case McEx.Player.ServerEvent.handle(:m, event, state) do
-      {:stop, _, _} = response -> response
-      state -> {:noreply, state}
-    end
+  def handle_info({:world_event, event_id, args}, state) do
+    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+      apply(mod, :handle_world_event, [event_id, args, state])
+    end)
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, connection_pid, reason}, %{connection: %{control: connection_pid}, name: name} = state) do
