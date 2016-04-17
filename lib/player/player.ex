@@ -13,6 +13,7 @@ defmodule McEx.Player do
   @properties [
     McEx.Player.Property.Keepalive,
     McEx.Player.Property.Movement,
+    McEx.Player.Property.PlayerList,
     McEx.Player.Property.ClientSettings,
     McEx.Player.Property.Chunks,
     McEx.Player.Property.Inventory,
