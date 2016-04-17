@@ -41,13 +41,14 @@ defmodule McEx.Net.Handler do
 
     unless [
         McProtocol.Packet.Client.Play.Settings,
-        McProtocol.Packet.Client.Play.CustomPayload,
         McProtocol.Packet.Client.Play.TeleportConfirm,
         McProtocol.Packet.Client.Play.KeepAlive,
         McProtocol.Packet.Client.Play.PositionLook,
         McProtocol.Packet.Client.Play.Position,
         McProtocol.Packet.Client.Play.Look,
         McProtocol.Packet.Client.Play.Abilities,
+        McProtocol.Packet.Client.Play.EntityAction,
+        # McProtocol.Packet.Client.Play.CustomPayload,
       ] |> Enum.member?(packet_data.module),
     do: Logger.debug inspect packet_data
 

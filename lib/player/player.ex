@@ -18,9 +18,9 @@ defmodule McEx.Player do
     McEx.Player.Property.Inventory,
   ]
 
-  def initial_properties do
+  def initial_properties(state) do
     @properties
-    |> Enum.map(fn mod -> {mod, apply(mod, :initial, [])} end)
+    |> Enum.map(fn mod -> {mod, apply(mod, :initial, [state])} end)
     |> Enum.into(%{})
   end
 
@@ -105,8 +105,9 @@ defmodule McEx.Player do
       name: name,
       uuid: uuid,
       world_id: world_id,
-      properties: initial_properties,
     }
+
+    state = Map.put(state, :properties, initial_properties(state))
 
     McEx.World.PlayerTracker.player_join(world_id, make_player_list_record(state))
 

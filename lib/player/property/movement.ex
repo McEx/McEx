@@ -8,7 +8,7 @@ defmodule McEx.Player.Property.Movement do
   def empty_delta_pos,
   do: {:rel_pos, 0, 0, 0}
 
-  def initial do
+  def initial(state) do
     %{
       pos: {:pos, 0, 100, 0},
       look: {:look, 0, 0},

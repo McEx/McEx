@@ -18,25 +18,23 @@ defmodule McEx.Net.HandlerClauses do
     entity_id = McEx.EntityIdGenerator.get_id(world_id)
 
     transitions = [
-      {:send_packet,
-       %Server.Play.Login{
+      {:send_packet, %Server.Play.Login{
          entity_id: entity_id,
-         game_mode: 0, #creative
+         game_mode: 0, #survival
          dimension: 0, #overworld
          difficulty: 0, #peaceful
          max_players: 10,
          level_type: "default",
-         reduced_debug_info: false}},
-      {:send_packet,
-       %Server.Play.SpawnPosition{
+        reduced_debug_info: false,
+        }},
+      {:send_packet, %Server.Play.SpawnPosition{
          location: {0, 100, 0}}},
-      {:send_packet,
-       %Server.Play.Abilities{
+      {:send_packet, %Server.Play.Abilities{
          flags: 0b11111111,
          flying_speed: 0.1,
-         walking_speed: 0.2}},
-      {:send_packet,
-       %Server.Play.Position{
+        walking_speed: 0.2,
+        }},
+      {:send_packet, %Server.Play.Position{
          x: 0,
          y: 100,
          z: 0,
@@ -45,14 +43,8 @@ defmodule McEx.Net.HandlerClauses do
          flags: 0,
          teleport_id: 0,
         }},
-      {:send_packet,
-       %Server.Play.WindowItems{
-         window_id: 0, # player inventory
-         items: (for i <- 0..46, do: %McProtocol.DataTypes.Slot{id: 1, count: i}),
-        }},
 
-      {:send_packet,
-       %Server.Play.SpawnEntityLiving{
+      {:send_packet, %Server.Play.SpawnEntityLiving{
          entity_id: 1000,
          entity_uuid: McProtocol.UUID.uuid4,
          type: 54,
@@ -83,7 +75,7 @@ defmodule McEx.Net.HandlerClauses do
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})
 
     state =
-      %{ state |
+      %{state |
          player: player_server,
          entity_id: entity_id,
        }
@@ -102,7 +94,7 @@ defmodule McEx.Net.HandlerClauses do
   end
   def handle_packet(%Client.Play.UseEntity{} = msg, stash, state) do
     Player.client_event(state.player,
-      case msg.type do
+      case msg.mouse do
         0 -> {:entity_interact, msg.target}
         1 -> {:entity_attack, msg.target}
         2 -> {:entity_interact_at, msg.target, {:pos, msg.x, msg.y, msg.z}}
@@ -150,7 +142,6 @@ defmodule McEx.Net.HandlerClauses do
     {[], state}
   end
 
-
   def handle_packet(%Client.Play.ArmAnimation{}, stash, state) do
     Player.client_event(state.player, {:action_punch_animation})
     {[], state}
@@ -159,7 +150,7 @@ defmodule McEx.Net.HandlerClauses do
   def handle_packet(%Client.Play.EntityAction{} = msg, stash, state) do
     Player.client_event(state.player,
       case msg.action_id do
-        0 -> {:player_set_crouch, true}
+        0 -> {:player_set_crouch, true} # TODO this does not set crouch when in a vehicle
         1 -> {:player_set_crouch, false}
         2 -> :player_bed_leave
         3 -> {:player_set_sprint, true}
@@ -221,8 +212,6 @@ defmodule McEx.Net.HandlerClauses do
   end
 
   def handle_packet(msg, stash, state) do
-    #Logger.error "Unhandled packet from #{stash.identity.name} #{inspect msg}"
-    #raise "unhandled packet"
     {[], state}
   end
 
