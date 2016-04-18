@@ -28,6 +28,11 @@ defmodule McEx.Player.Property.Inventory do
   end
 
   def handle_client_packet(%Client.Play.WindowClick{} = msg, state) do
+    # TODO testing
+    Logger.debug inspect msg
+    n = msg.slot
+    write_client_packet(state, %Server.Play.Chat{message: ~s({"text": "Hi! #{n}"}), position: 2})
+    state = set_slot(state, %McProtocol.DataTypes.Slot{id: 1, count: n, damage: 0}, n)
 
     # TODO: notify other players if visible item changed
 
@@ -50,6 +55,11 @@ defmodule McEx.Player.Property.Inventory do
   end
 
   def handle_client_packet(%Client.Play.EnchantItem{} = msg, state) do
+    state
+  end
+
+  def handle_entity_event({:interact, entity}, state) do
+    # maybe open a new window
     state
   end
 

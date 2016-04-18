@@ -14,4 +14,12 @@ defmodule McEx.Player.Property.Inventory.Player do
     prop
   end
 
+  def get_slots_test(prop) do
+    [ prop.window_state.crafting,
+      prop.armor,
+      prop.storage,
+      prop.hotbar,
+      [prop.off_hand]]
+  end
+
 end
