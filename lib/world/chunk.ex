@@ -73,4 +73,9 @@ defmodule McEx.Chunk do
     chunk = gen_chunk(state.pos)
     {:noreply, %{state | chunk_resource: chunk}}
   end
+
+  def terminate(reason, _state) do
+    :gproc.goodbye
+    reason
+  end
 end

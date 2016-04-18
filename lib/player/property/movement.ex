@@ -26,22 +26,18 @@ defmodule McEx.Player.Property.Movement do
   def handle_client_packet(%Client.Play.Position{} = msg, state) do
     pos = {:pos, msg.x, msg.y, msg.z}
     Position.set_position(state, %{pos: pos, on_ground: msg.on_ground})
-    state
   end
   def handle_client_packet(%Client.Play.Look{} = msg, state) do
     look = {:look, msg.yaw, msg.pitch}
     Position.set_position(state, %{look: look, on_ground: msg.on_ground})
-    state
   end
   def handle_client_packet(%Client.Play.PositionLook{} = msg, state) do
     pos = {:pos, msg.x, msg.y, msg.z}
     look = {:look, msg.yaw, msg.pitch}
     Position.set_position(state, %{pos: pos, look: look, on_ground: msg.on_ground})
-    state
   end
   def handle_client_packet(%Client.Play.Flying{} = msg, state) do
     Position.set_position(state, %{on_ground: msg.on_ground})
-    state
   end
 
   def delta_pos_to_short({:rel_pos, dx, dy, dz}),
