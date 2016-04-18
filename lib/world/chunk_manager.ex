@@ -59,7 +59,7 @@ defmodule McEx.Chunk.Manager do
     end
   end
 
-  def handle_info({:DOWN, _ref, :process, process, _reason}, state) do
+  def handle_info({:DOWN, _ref, :process, _process, _reason}, state) do
     #TODO: Release all
     {:noreply, state}
   end
@@ -75,7 +75,7 @@ defmodule McEx.Chunk.Manager do
     state = stop_chunk_if_released(state, chunk)
     {:noreply, state}
   end
-  def handle_cast({:release_all_chunks, process}, state) do
+  def handle_cast({:release_all_chunks, _process}, state) do
     #TODO
     #new_chunks = Enum.map(state.chunks, fn {key, data} ->
     #  data = get_and_update_in(data.locks, &{&1, Set.delete(&1, process)})

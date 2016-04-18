@@ -43,7 +43,7 @@ defmodule McEx.World.PlayerTracker do
     {:reply, nil, state}
   end
 
-  def handle_info({:DOWN, mon_ref, type, object, info}, state) do
+  def handle_info({:DOWN, mon_ref, _type, _object, _info}, state) do
     player_pid = Enum.find(state.players, fn(rec) -> rec.mon_ref == mon_ref end).player_pid
     state = handle_leave(player_pid, state)
     {:noreply, state}

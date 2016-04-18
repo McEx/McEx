@@ -1,0 +1,19 @@
+* Regions
+** Size
+*** Customizable?
+Possibly 2x2 or 4*4 chunks
+Almost certainly multiple of 2, easier math
+*** Overlap?
+Probably not needed
+Only culprit is players rapidly leaving/joining region. Probably fine.
+** Events
+Entities send events to the regions they are in
+** Entry
+*** Joining
+On joining a region, entity sends join event to region
+**** Catching up with state
+Region state server? Probably not
+Other entities respond to join message
+This needs a process that does locking, prevent race conditions
+*** Leaving
+On leaving, entity sends leave event

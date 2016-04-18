@@ -61,14 +61,13 @@ defmodule McEx.Chunk do
   def handle_cast(:stop_chunk, state) do
     {:stop, :normal, state}
   end
-  def handle_cast({:block_destroy, {x, y, z}}, state) do
+  def handle_call({:block_destroy, {x, y, z}}, _from, state) do
     Chunk.set_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)}, 0)
 
-    #message = {:block, :destroy, {x, y, z}}
     message = {:world_event, :chunk, {:block_destroy, {x, y, z}}}
     McEx.Registry.world_players_send(state.world_id, message)
 
-    {:noreply, state}
+    {:reply, nil, state}
   end
   def handle_cast(:gen_chunk, state) do
     chunk = gen_chunk(state.pos)

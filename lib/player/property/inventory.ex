@@ -3,8 +3,8 @@ defmodule McEx.Player.Property.Inventory do
 
   alias McProtocol.Packet.{Client, Server}
 
-  def initial(_state) do
-    nil
+  def initial(state) do
+    state
   end
 
   def handle_client_packet(%Client.Play.CloseWindow{} = msg, state) do

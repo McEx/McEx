@@ -29,8 +29,8 @@ defmodule McEx.Player.Property.ClientSettings do
     end
   end
 
-  def initial(_state) do
-    %{
+  def initial(state) do
+    prop = %{
       locale: "en_GB",
       view_distance: 20,
       chat_mode: :enabled,
@@ -38,6 +38,7 @@ defmodule McEx.Player.Property.ClientSettings do
       skin_parts: %SkinParts{},
       main_hand: :right,
     }
+    set_prop(state, prop)
   end
 
   def int_chat_mode(0), do: :enabled
