@@ -48,7 +48,7 @@ defmodule McEx.Net.Handler do
         McProtocol.Packet.Client.Play.EntityAction,
         # McProtocol.Packet.Client.Play.CustomPayload,
       ] |> Enum.member?(packet_data.module),
-    do: Logger.debug inspect packet_data
+    do: Logger.debug inspect packet_data.packet
 
     McEx.Player.client_packet(state.player, packet_data.packet)
     {:reply, [], state}
