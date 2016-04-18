@@ -22,6 +22,7 @@ script:
   - mix test
 
 notifications:
+  webhooks: http://travis.lunarco.de/mcex
   irc:
     on_success: change
     on_failure: change
