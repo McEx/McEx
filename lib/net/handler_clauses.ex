@@ -39,6 +39,26 @@ defmodule McEx.Net.HandlerClauses do
          velocity_z: 0,
          metadata: [],
        }},
+      {:send_packet,
+       %Server.Play.SpawnEntity{
+         entity_id: 1001,
+         object_uuid: McProtocol.UUID.uuid4,
+         type: 2,
+         x: 1,
+         y: 100,
+         z: 1,
+         pitch: 0,
+         yaw: 0,
+         int_field: 1,
+         velocity_x: 0,
+         velocity_y: 0,
+         velocity_z: 0,
+       }},
+      {:send_packet,
+       %Server.Play.EntityMetadata{
+         entity_id: 1001,
+         metadata: [{5, :slot, %McProtocol.DataTypes.Slot{id: 5}}],
+       }},
     ]
 
     # TODO: Chunks need to sent after JoinGame, and this should be before. Make this work properly with a world system.
@@ -50,6 +70,8 @@ defmodule McEx.Net.HandlerClauses do
         entity_id: entity_id,
       }
     )
+
+    McEx.World.EntitySupervisor.start_entity(world_id, McEx.Entity.Item, %{})
 
     # TODO: Handle player server crash
     #GenServer.call(state.protocol_state.connection.control, {:die_with, player_server})

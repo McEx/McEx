@@ -1,81 +1,47 @@
 defmodule McEx.Player.Property.Movement do
   use McEx.Entity.Property
 
+  alias McEx.Entity.Property.{Position}
   alias McProtocol.Packet.{Client, Server}
 
-  def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}),
-  do: {:rel_pos, x-x0, y-y0, z-z0}
-  def empty_delta_pos,
-  do: {:rel_pos, 0, 0, 0}
-
   def initial(state) do
-    write_client_packet(state, %Server.Play.SpawnPosition{location: {0, 100, 0}})
-
-    packet = %Server.Play.Position{
-      x: 0, y: 100, z: 0,
-      yaw: 0, pitch: 0,
-      flags: 0,
-      teleport_id: 0,
-    }
-    write_client_packet(state, packet)
-
     %{
-      pos: {:pos, 0, 100, 0},
-      look: {:look, 0, 0},
-      on_ground: false,
-    }
+      pos: {:pos, x, y, z},
+      look: {:look, yaw, pitch},
+    } = Position.get_position(state)
+
+    %Server.Play.SpawnPosition{location: {x, y, z}}
+    |> write_client_packet(state)
+
+    %Server.Play.Position{
+      x: x, y: y, z: z,
+      yaw: yaw, pitch: pitch,
+      flags: 0,
+      teleport_id: 0}
+    |> write_client_packet(state)
+
+    state
   end
 
   def handle_client_packet(%Client.Play.Position{} = msg, state) do
-    prop = get_prop(state)
-
     pos = {:pos, msg.x, msg.y, msg.z}
-    delta_pos = calc_delta_pos(pos, prop.pos)
-    entity_broadcast(state, :move,
-                     {pos, delta_pos, prop.look, msg.on_ground})
-
-    prop = %{prop |
-      pos: pos,
-      on_ground: msg.on_ground,
-     }
-    set_prop(state, prop)
+    Position.set_position(state, %{pos: pos, on_ground: msg.on_ground})
+    state
   end
   def handle_client_packet(%Client.Play.Look{} = msg, state) do
-    prop = get_prop(state)
-
     look = {:look, msg.yaw, msg.pitch}
-    entity_broadcast(state, :move,
-                     {prop.pos, empty_delta_pos, look, msg.on_ground})
-    prop = %{prop |
-      look: look,
-      on_ground: msg.on_ground,
-     }
-    set_prop(state, prop)
+    Position.set_position(state, %{look: look, on_ground: msg.on_ground})
+    state
   end
   def handle_client_packet(%Client.Play.PositionLook{} = msg, state) do
-    prop = get_prop(state)
-
     pos = {:pos, msg.x, msg.y, msg.z}
-    delta_pos = calc_delta_pos(pos, prop.pos)
     look = {:look, msg.yaw, msg.pitch}
-    entity_broadcast(state, :move, {pos, delta_pos, look, msg.on_ground})
-
-    prop = %{prop |
-      pos: pos,
-      look: look,
-      on_ground: msg.on_ground,
-     }
-    set_prop(state, prop)
+    Position.set_position(state, %{pos: pos, look: look, on_ground: msg.on_ground})
+    state
   end
   def handle_client_packet(%Client.Play.Flying{} = msg, state) do
-    prop = get_prop(state)
-
-    entity_broadcast(state, :move,
-                     {prop.pos, empty_delta_pos, prop.look, msg.on_ground})
-    prop = %{prop |
-      on_ground: msg.on_ground,
-     }
-    set_prop(state, prop)
+    Position.set_position(state, %{on_ground: msg.on_ground})
+    state
   end
 
   def delta_pos_to_short({:rel_pos, dx, dy, dz}),
@@ -87,16 +53,17 @@ defmodule McEx.Player.Property.Movement do
                           state = %{eid: self_eid}) when eid != self_eid do
     {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(delta_pos)
     {:look, yaw, pitch} = look
-    packet = %Server.Play.EntityMoveLook{
+
+    %Server.Play.EntityMoveLook{
       entity_id: eid,
       d_x: dx,
       d_y: dy,
       d_z: dz,
       yaw: deg_to_byte(yaw),
       pitch: deg_to_byte(pitch),
-      on_ground: on_ground,
-    }
-    write_client_packet(state, packet)
+      on_ground: on_ground}
+    |> write_client_packet(state)
+
     state
   end
 

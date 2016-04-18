@@ -1,6 +1,6 @@
 defmodule McEx.Entity.Property do
 
-  @callback initial :: any
+  @callback initial(map) :: any
   @callback handle_client_packet(struct, map) :: map
   @callback handle_world_event(atom, any, map) :: map
   @callback handle_entity_event(integer, atom, any, map) :: map
@@ -40,8 +40,22 @@ defmodule McEx.Entity.Property do
   def entity_broadcast(state, event_id, value) do
     McEx.Registry.world_players_send(state.world_id, {:entity_event, state.eid, event_id, value})
   end
-  def write_client_packet(state, packet) do
+  def write_client_packet(packet, state) do
     McProtocol.Acceptor.ProtocolState.Connection.write_packet(state.connection, packet)
+  end
+
+  @doc """
+  This will call the initializers on all properties. It is called by the entity
+  process.
+  """
+  def initial_properties(%{properties: _} = state, props) do
+    state_props = props |> Enum.map(&{&1, nil}) |> Enum.into(%{})
+    state = %{state | properties: state_props}
+
+    props
+    |> Enum.reduce(state, fn
+      (module, state) -> apply(module, :initial, [state])
+    end)
   end
 
 end

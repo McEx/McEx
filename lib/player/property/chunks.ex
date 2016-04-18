@@ -4,11 +4,12 @@ defmodule McEx.Player.Property.Chunks do
 
   alias McProtocol.Packet.Server
 
-  def initial(_state) do
-    %{
+  def initial(state) do
+    prop = %{
       last_pos: nil,
       loaded_chunks: MapSet.new,
     }
+    set_prop(state, prop)
   end
 
   def get_chunks_in_view(pos, view_distance) do
@@ -73,7 +74,7 @@ defmodule McEx.Player.Property.Chunks do
     %{prop | loaded_chunks: loaded_chunks}
   end
 
-  def handle_entity_event(eid, :move, {pos, delta_pos, look, on_ground},
+  def handle_entity_event(eid, :move, {pos, delta_pos, look, on_ground} = ev,
                           state = %{eid: eid}) do
     prop = get_prop(state)
 
