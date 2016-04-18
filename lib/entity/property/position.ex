@@ -18,7 +18,6 @@ defmodule McEx.Entity.Property.Position do
   end
 
   def set_position(state, update) do
-    IO.inspect {:updat,  update}
     prop = get_prop(state)
 
     pos = Map.get(update, :pos, prop.pos)
