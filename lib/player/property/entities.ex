@@ -1,12 +1,33 @@
 defmodule McEx.Player.Property.Entities do
   use McEx.Entity.Property
 
+  @moduledoc """
+  This handles everything related to spawning and despawning entities on the client.
+
+  It depends on:
+  * McEx.Entity.Property.Shards
+  * McEx.Entity.Property.Position
+
+  It coordinates fairly closely with McEx.Entity.Property.Shards which handles
+  shard membership.
+
+  TODO: This is broken at the moment. Entities located in chunks that unload will get
+  despawned by the client. This should maintain a registry of entities the client
+  knows about along with their positions, so that it can take appropriate action
+  when a chunk is unloaded. This will most likely be sending another spawn packet
+  for the entities the client despawned in order to prevent a state desync.
+  """
+
   alias McProtocol.Packet.{Client, Server}
 
   def initial(state) do
     state
   end
 
+  @doc """
+  Handles a new entity entering a shard we are listening to.
+  This message is sent by McEx.Entity.Property.Shards.
+  """
   def handle_shard_broadcast(pos, :entity_enter, eid, args, state = %{eid: c_eid})
   when eid != c_eid do
 
@@ -16,6 +37,10 @@ defmodule McEx.Player.Property.Entities do
     state
   end
 
+  @doc """
+  Handles an entity leaving a shard we are listening to.
+  This message is sent by McEx.Entity.Property.Shards.
+  """
   def handle_shard_broadcast(pos, :entity_exit, eid, args, state = %{eid: c_eid})
   when eid != c_eid do
     IO.inspect {:exit, pos, eid, args}
@@ -31,6 +56,10 @@ defmodule McEx.Player.Property.Entities do
   do: {:rel_pos_short, round(dx*4096), round(dy*4096), round(dz*4096)}
   def deg_to_byte(deg), do: round(deg / 360 * 256)
 
+  @doc """
+  Sends position updates to the client for entities in shards we are listening to.
+  This message is sent by McEx.Entity.Property.Position.
+  """
   def handle_shard_broadcast(pos, :entity_move, eid, args, state = %{eid: c_eid})
   when eid != c_eid do
     {pos, delta_pos, look, on_ground} = args
@@ -50,11 +79,18 @@ defmodule McEx.Player.Property.Entities do
     state
   end
 
+  @doc """
+  This handles the responses we get to the :entity_catchup message sent by
+  McEx.Event.Property.Shards.
+  It will take care of sending initial data for entities already in a shard when
+  enter it.
+  This is sent by McEx.Event.Property.Shards.
+  """
   def handle_info_message({:catchup_response, data}, state) do
     spawn_entity(data, state)
   end
 
-  def spawn_entity(descr, state) do
+  defp spawn_entity(descr, state) do
     case descr.type do
       :player ->
         {:pos, x, y, z} = descr.position.pos

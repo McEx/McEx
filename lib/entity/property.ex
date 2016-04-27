@@ -81,7 +81,6 @@ defmodule McEx.Entity.Property do
     end)
   end
   def write_client_packet(packet, state) do
-    IO.inspect packet
     McProtocol.Acceptor.ProtocolState.Connection.write_packet(state.connection, packet)
   end
 
