@@ -29,7 +29,7 @@ defmodule McEx.Chunk.Manager do
     McEx.Registry.reg_world_service(world_id, :chunk_manager)
     {:ok, %{
         world_id: world_id,
-        chunks: %{}, #{x, y}: PID
+        chunks: %{}, # {x, y}: PID
       }}
   end
 

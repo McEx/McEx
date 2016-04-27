@@ -10,6 +10,8 @@ defmodule McEx.Mixfile do
      start_permanent: Mix.env == :prod,
      compilers: [:rustler] ++ Mix.compilers,
      deps: deps,
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
      rustler_crates: ["native/world", "native/chunk"]]
   end
 
@@ -36,11 +38,12 @@ defmodule McEx.Mixfile do
      {:cutkey, github: "imtal/cutkey"},
      {:ibrowse, github: "cmullaparthi/ibrowse"},
      {:httpotion, "~> 2.1.0"},
-     {:gproc, "~> 0.5.0"},
+     {:gproc, github: "uwiger/gproc"}, #"~> 0.5.0"},
      {:uuid, "~> 1.1"},
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:mc_chunk, github: "McEx/McChunk"},
      {:mc_protocol, github: "McEx/McProtocol"},
-     {:rustler, "~> 0.0.5"}]
+     {:rustler, "~> 0.0.5"},
+     {:excoveralls, "~> 0.5", only: :test}]
   end
 end

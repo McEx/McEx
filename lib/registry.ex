@@ -38,4 +38,47 @@ defmodule McEx.Registry do
   def chunk_server_pid(world_id, pos), do:
   :gproc.lookup_pid(chunk_server_key(world_id, pos))
 
+  # Shards
+  def shard_server_key(world_id, pos), do:
+  {:n, :l, {:world_shards, world_id, pos}}
+
+  def reg_shard_server(world_id, pos), do:
+  :gproc.reg(shard_server_key(world_id, pos))
+
+  def shard_server_pid?(world_id, pos) do
+    case :gproc.lookup_pids(shard_server_key(world_id, pos)) do
+      [pid] -> {:ok, pid}
+      _ -> :noreg
+    end
+  end
+  def shard_server_pid(world_id, pos) do
+    :gproc.lookup_pid(shard_server_key(world_id, pos))
+  end
+
+  # Shard listeners
+  def shard_listener_key(world_id, pos), do:
+  {:p, :l, {:shard_listeners, world_id, pos}}
+
+  def reg_shard_listener(world_id, pos), do:
+  :gproc.reg(shard_listener_key(world_id, pos))
+
+  def unreg_shard_listener(world_id, pos), do:
+  :gproc.unreg(shard_listener_key(world_id, pos))
+
+  def shard_listener_send(world_id, pos, message), do:
+  :gproc.send(shard_listener_key(world_id, pos), message)
+
+  # Shard membership
+  def shard_member_key(world_id, pos), do:
+  {:p, :l, {:shard_members, world_id, pos}}
+
+  def reg_shard_member(world_id, pos), do:
+  :gproc.reg(shard_member_key(world_id, pos))
+
+  def unreg_shard_member(world_id, pos), do:
+  :gproc.unreg(shard_member_key(world_id, pos))
+
+  def shard_member_send(world_id, pos, message), do:
+  :gproc.send(shard_member_key(world_id, pos), message)
+
 end

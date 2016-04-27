@@ -2,7 +2,7 @@ defmodule McEx.Entity.Property.Position do
   use McEx.Entity.Property
 
   def calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}),
-  do: {:rel_pos, x-x0, y-y0, z-z0}
+  do: {:rel_pos, x0-x, y0-y, z0-z}
 
   def initial(state) do
     prop = %{
@@ -25,7 +25,9 @@ defmodule McEx.Entity.Property.Position do
     look = Map.get(update, :look, prop.look)
     on_ground = Map.get(update, :on_ground, prop.on_ground)
 
-    entity_broadcast(state, :move, {pos, delta_pos, look, on_ground})
+    value = {pos, delta_pos, look, on_ground}
+    state = prop_broadcast(state, :move, value)
+    McEx.Entity.Property.Shards.broadcast_shard(state, :entity_move, value)
 
     prop = %{prop |
              pos: pos,

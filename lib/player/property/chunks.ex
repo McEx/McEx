@@ -74,8 +74,7 @@ defmodule McEx.Player.Property.Chunks do
     %{prop | loaded_chunks: loaded_chunks}
   end
 
-  def handle_entity_event(eid, :move, {pos, delta_pos, look, on_ground} = ev,
-                          state = %{eid: eid}) do
+  def handle_prop_event(:move, {pos, delta_pos, look, on_ground} = ev, state) do
     prop = get_prop(state)
 
     # If we have moved more than 8 blocks away from the last chunk load on the

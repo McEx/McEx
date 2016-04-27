@@ -53,11 +53,13 @@ defmodule McEx.World.PlayerTracker do
     mon_ref = :erlang.monitor(:process, record.player_pid)
     record = %{record | mon_ref: mon_ref}
 
-    message = {:world_event, :player_list, {:join, [record]}}
+    message = {:entity_msg, :world_event, {:player_list, {:join, [record]}}}
+    #message = {:world_event, :player_list, {:join, [record]}}
     McEx.Registry.world_players_send(state.world_id, message)
 
     state = update_in state.players, &([record | &1])
-    message = {:world_event, :player_list, {:join, state.players}}
+    message = {:entity_msg, :world_event, {:player_list, {:join, state.players}}}
+    #message = {:world_event, :player_list, {:join, state.players}}
     send(record.player_pid, message)
     state
   end
@@ -65,7 +67,8 @@ defmodule McEx.World.PlayerTracker do
     record = Enum.find(state.players, fn(rec) -> rec.player_pid == pid end)
     :erlang.demonitor(record.mon_ref)
 
-    message = {:world_event, :player_list, {:leave, [record]}}
+    message = {:entity_msg, :world_event, {:player_list, {:leave, [record]}}}
+    #message = {:world_event, :player_list, {:leave, [record]}}
     McEx.Registry.world_players_send(state.world_id, message)
 
     update_in state.players, &(Enum.filter(&1, fn(rec) -> rec != record end))

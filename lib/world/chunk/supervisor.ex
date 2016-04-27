@@ -14,7 +14,7 @@ defmodule McEx.Chunk.ChunkSupervisor do
     McEx.Registry.reg_world_service(world_id, :chunk_supervisor)
 
     children = [
-      worker(McEx.Chunk, [world_id], restart: :transient)
+      worker(McEx.Chunk, [world_id], restart: :transient),
     ]
 
     opts = [strategy: :simple_one_for_one]

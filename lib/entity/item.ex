@@ -13,9 +13,9 @@ defmodule McEx.Entity.Item do
   def init({world_id, opts}) do
     state = %{
       world_id: world_id,
+      properties: %{},
     }
-
-    
+    |> McEx.Entity.Property.initial_properties(@properties)
 
     {:ok, state}
   end

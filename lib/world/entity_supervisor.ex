@@ -10,7 +10,9 @@ defmodule McEx.World.EntitySupervisor do
   use Supervisor
 
   def start_link(world_id) do
-    Supervisor.start_link(__MODULE__, world_id)
+    ret = Supervisor.start_link(__MODULE__, world_id)
+    McEx.World.EntitySupervisor.start_entity(world_id, McEx.Entity.Item, %{})
+    ret
   end
 
   def start_entity(world_id, module, options) do

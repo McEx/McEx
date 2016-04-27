@@ -12,6 +12,9 @@ defmodule McEx.World.Supervisor do
       supervisor(McEx.Chunk.ChunkSupervisor, [world_id]),
       worker(McEx.Chunk.Manager, [world_id]),
 
+      supervisor(McEx.World.Shard.Supervisor, [world_id]),
+      worker(McEx.World.Shard.Manager, [world_id]),
+
       worker(McEx.Player.KeepAliveSender, [world_id]),
       worker(McEx.World.PlayerTracker, [world_id]),
 

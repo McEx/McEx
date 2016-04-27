@@ -11,15 +11,15 @@ defmodule McEx.Player do
     user: {boolean, String.t, %McProtocol.UUID{}},
   }
 
-
-
   @spec start_link(term, startup_options) :: GenServer.on_start
   def start_link(world_id, options) do
     GenServer.start_link(__MODULE__, {world_id, options})
   end
 
   def client_packet(pid, packet) do
-    GenServer.cast(pid, {:client_packet, packet})
+    message = {:entity_msg, :client_packet, packet}
+    send pid, message
+    #GenServer.cast(pid, message)
   end
 
   def player_eid(server) do
@@ -43,11 +43,15 @@ defmodule McEx.Player do
 
   @properties [
     McEx.Player.Property.Keepalive,
+    McEx.Player.Property.Spawn,
 
     McEx.Entity.Property.Position,
-    McEx.Player.Property.Movement,
-
     McEx.Player.Property.PlayerList,
+
+    McEx.Player.Property.Movement,
+    McEx.Entity.Property.Shards,
+    McEx.Player.Property.Entities,
+
     McEx.Player.Property.ClientSettings,
 
     McEx.Player.Property.Chunks,
@@ -79,25 +83,38 @@ defmodule McEx.Player do
     {:reply, state.eid, state}
   end
 
-  def handle_cast({:client_packet, packet}, state) do
+  #def handle_cast({:client_packet, packet}, state) do
+  #  state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+  #    apply(mod, :handle_client_packet, [packet, state])
+  #  end)
+  #  {:noreply, state}
+  #end
+
+  def handle_info({:entity_msg, type, body}, state) do
     state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_client_packet, [packet, state])
+      apply(mod, :handle_entity_msg, [type, body, state])
     end)
     {:noreply, state}
   end
 
-  def handle_info({:entity_event, eid, event_id, value}, state) do
-    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_entity_event, [eid, event_id, value, state])
-    end)
-    {:noreply, state}
-  end
-  def handle_info({:world_event, event_id, args}, state) do
-    state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_world_event, [event_id, args, state])
-    end)
-    {:noreply, state}
-  end
+  #def handle_info({:world_event, event_id, args}, state) do
+  #  state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+  #    apply(mod, :handle_world_event, [event_id, args, state])
+  #  end)
+  #  {:noreply, state}
+  #end
+  #def handle_info({:shard_broadcast, pos, event_id, eid, args}, state) do
+  #  state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+  #    apply(mod, :handle_shard_broadcast, [pos, event_id, eid, args, state])
+  #  end)
+  #  {:noreply, state}
+  #end
+  #def handle_info({:shard_member_broadcast, pos, event_id, eid, args}, state) do
+  #  state = Enum.reduce(state.properties, state, fn({mod, _}, state) ->
+  #    apply(mod, :handle_shard_member_broadcast, [pos, event_id, eid, args, state])
+  #  end)
+  #  {:noreply, state}
+  #end
 
   def handle_info({:DOWN, _ref, :process, connection_pid, reason},
                   %{connection: %{control: connection_pid}} = state) do

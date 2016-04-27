@@ -37,17 +37,17 @@ defmodule McEx.Player.Property.PlayerList do
       data: players_add}
     |> write_client_packet(state)
 
-    for record <- records do
-      if record.player_pid != self do
-        %Server.Play.NamedEntitySpawn{
-          entity_id: record.eid,
-          player_uuid: record.uuid,
-          x: 0, y: 100, z: 0,
-          yaw: 0, pitch: 0,
-          metadata: []}
-        |> write_client_packet(state)
-      end
-    end
+    #for record <- records do
+    #  if record.player_pid != self do
+    #    %Server.Play.NamedEntitySpawn{
+    #      entity_id: record.eid,
+    #      player_uuid: record.uuid,
+    #      x: 0, y: 100, z: 0,
+    #      yaw: 0, pitch: 0,
+    #      metadata: []}
+    #    |> write_client_packet(state)
+    #  end
+    #end
 
     state
   end

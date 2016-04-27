@@ -1,0 +1,38 @@
+Contains a list of property interactions for entities.
+
+* Client Packet
+Used only by the player entity.
+Should probably be moved into a separate place to make McEx.Entity.Property entirely separate.
+
+* World Event
+Sent by some world service with information that affects everything in the world.
+Examples of this would be ingame world time changes.
+
+* Entity Event
+** TODO Should be removed please go away.
+Replaced with shard events.
+
+* Shard Event
+Event sent to all listeners in a shard.
+Would probably contain things like position updates for entities.
+
+* Shard Member Event
+Event sent to all members of a shard. (physically present in shard)
+
+
+* Prop Event
+Sends the event to all properties in the entity synchronously.
+Sent with prop_broadcast in a property.
+Handled by the handle_prop_event in a property, this returns the state.
+It will return an updated state.
+** Usages
+
+* Prop Collect
+Similar to Prop Event, except it aggregates the result from all properties.
+Sent with prop_collect in a property.
+Handled by handle_prop_collect in a property, this returns {response, state}.
+nil is no response.
+It will return {responses, state}.
+** Types
+*** :collect_spawn_data
+Collects data needed for the event to spawn.
