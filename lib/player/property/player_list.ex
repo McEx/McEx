@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.PlayerList do
-  use McEx.Entity.Property
+  use McEx.Player.Property
 
   alias McProtocol.Packet.{Client, Server}
 

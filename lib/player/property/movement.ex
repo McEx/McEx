@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.Movement do
-  use McEx.Entity.Property
+  use McEx.Player.Property
 
   alias McEx.Entity.Property.{Position}
   alias McProtocol.Packet.{Client, Server}

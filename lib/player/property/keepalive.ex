@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.Keepalive do
-  use McEx.Entity.Property
+  use McEx.Player.Property
 
   alias McProtocol.Packet.{Client, Server}
 
@@ -11,6 +11,9 @@ defmodule McEx.Player.Property.Keepalive do
     set_prop(state, prop)
   end
 
+  @mod """
+  Event sent by McEx.Player.KeepAliveSender.
+  """
   def handle_world_event(:keep_alive_send, {nonce, max_missed}, state) do
     prop = get_prop(state)
     prop =

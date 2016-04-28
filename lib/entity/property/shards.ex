@@ -27,6 +27,7 @@ defmodule McEx.Entity.Property.Shards do
     prop = %{
       current_shard: nil,
       shards: MapSet.new,
+      view_distance: 8,
     }
     state = set_prop(state, prop)
     state = join_leave_shards(state)
@@ -92,7 +93,8 @@ defmodule McEx.Entity.Property.Shards do
     end
 
     prop = get_prop(state)
-    shards = transition_shards(pos, 20, prop.shards, join_fun, leave_fun)
+    shards = transition_shards(pos, prop.view_distance, prop.shards,
+                               join_fun, leave_fun)
     set_prop(state, %{prop | shards: shards})
   end
 
@@ -115,7 +117,7 @@ defmodule McEx.Entity.Property.Shards do
 
   def transition_shards(pos, view_distance, shards_in, join_fun, leave_fun) do
     chunk_pos = Pos.to_chunk(pos)
-    shards_join = get_visible_shards(chunk_pos, 8)
+    shards_join = get_visible_shards(chunk_pos, view_distance)
 
     # Join
     Enum.reduce(shards_join, shards_in, fn

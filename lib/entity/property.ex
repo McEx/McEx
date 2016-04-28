@@ -8,9 +8,6 @@ defmodule McEx.Entity.Property do
   defmacro __before_compile__(_env) do
     quote do
 
-      def handle_entity_msg(:client_packet, packet, state) do
-        handle_client_packet(packet, state)
-      end
       def handle_entity_msg(:world_event, {event_name, value}, state) do
         handle_world_event(event_name, value, state)
       end
@@ -24,11 +21,12 @@ defmodule McEx.Entity.Property do
       def handle_entity_msg(:info_message, data, state) do
         handle_info_message(data, state)
       end
+      # TODO: Fix this
+      def handle_entity_msg(:client_packet, _packet, state), do: state
       def handle_entity_msg(msg_type, value, state) do
         raise "Entity message type #{inspect msg_type} not handled in property."
       end
 
-      def handle_client_packet(_packet, state), do: state
       def handle_world_event(_event_name, _value, state), do: state
       def handle_info_message(_data, state), do: state
 
@@ -38,6 +36,7 @@ defmodule McEx.Entity.Property do
 
       def handle_prop_event(_, _, state), do: state
       def handle_prop_collect(_, _, state), do: {nil, state}
+
     end
   end
 
@@ -48,8 +47,7 @@ defmodule McEx.Entity.Property do
 
       import McEx.Entity.Property, only: [get_prop: 1, set_prop: 2,
                                           prop_broadcast: 3,
-                                          prop_collect: 3,
-                                          write_client_packet: 2]
+                                          prop_collect: 3]
     end
   end
 
@@ -79,9 +77,6 @@ defmodule McEx.Entity.Property do
         _ -> {[response | acc], state}
       end
     end)
-  end
-  def write_client_packet(packet, state) do
-    McProtocol.Acceptor.ProtocolState.Connection.write_packet(state.connection, packet)
   end
 
   @doc """

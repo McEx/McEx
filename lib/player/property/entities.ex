@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.Entities do
-  use McEx.Entity.Property
+  use McEx.Player.Property
 
   @moduledoc """
   This handles everything related to spawning and despawning entities on the client.

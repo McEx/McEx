@@ -1,5 +1,11 @@
 defmodule McEx.Player.Property.ClientSettings do
-  use McEx.Entity.Property
+  use McEx.Player.Property
+
+  @moduledoc """
+  This module handles the Client.Play.Settings packet.
+
+  It depends on nothing.
+  """
 
   alias McProtocol.Packet.Client
   alias McProtocol.Packet.Server

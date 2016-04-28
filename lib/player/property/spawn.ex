@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.Spawn do
-  use McEx.Entity.Property
+  use McEx.Player.Property
 
   def initial(state) do
     state

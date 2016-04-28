@@ -1,5 +1,5 @@
 defmodule McEx.Player.Property.Chunks do
-  use McEx.Entity.Property
+  use McEx.Player.Property
   use McEx.Util
 
   alias McProtocol.Packet.Server

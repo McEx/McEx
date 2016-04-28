@@ -53,6 +53,7 @@ defmodule McEx.Player do
     McEx.Player.Property.Entities,
 
     McEx.Player.Property.ClientSettings,
+    McEx.Player.Property.Windows,
 
     McEx.Player.Property.Chunks,
     McEx.Player.Property.BlockInteract,

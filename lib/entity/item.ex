@@ -4,6 +4,7 @@ defmodule McEx.Entity.Item do
 
   @properties [
     McEx.Entity.Property.Position,
+    McEx.Entity.Property.Physics,
   ]
 
   def start_link(world_id, options) do
