@@ -20,7 +20,7 @@ defmodule McEx.Entity.Property.Shards do
      Math.floor(cz / @shard_size) * @shard_size,}
   end
 
-  def initial(state) do
+  def initial(_args, state) do
     # TODO: Currently the client will only join a shard on the current move event.
     # Do we want to change this?
 

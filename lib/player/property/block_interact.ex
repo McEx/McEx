@@ -3,7 +3,7 @@ defmodule McEx.Player.Property.BlockInteract do
 
   alias McProtocol.Packet.{Client, Server}
 
-  def initial(state) do
+  def initial(_args, state) do
     state
   end
 

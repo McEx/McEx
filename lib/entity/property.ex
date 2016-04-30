@@ -83,13 +83,13 @@ defmodule McEx.Entity.Property do
   This will call the initializers on all properties. It is called by the entity
   process.
   """
-  def initial_properties(%{properties: _} = state, props) do
+  def initial_properties(%{properties: _} = state, props, args \\ %{}) do
     state_props = props |> Enum.map(&{&1, nil}) |> Enum.into(%{})
     state = %{state | properties: state_props}
 
     props
     |> Enum.reduce(state, fn
-      (module, state) -> apply(module, :initial, [state])
+      (module, state) -> apply(module, :initial, [args[module], state])
     end)
   end
 

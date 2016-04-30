@@ -20,8 +20,8 @@ defmodule McEx.Player.Property.Entities do
 
   alias McProtocol.Packet.{Client, Server}
 
-  def initial(state) do
-    state
+  def initial(args, state) do
+    set_prop(state, args)
   end
 
   @doc """
@@ -106,6 +106,21 @@ defmodule McEx.Player.Property.Entities do
         %Server.Play.EntityHeadRotation{
           entity_id: descr.eid,
           head_yaw: trunc(yaw)}
+        |> write_client_packet(state)
+
+      :object ->
+        {:pos, x, y, z} = descr.position.pos
+        {:look, yaw, pitch} = descr.position.look
+        %Server.Play.SpawnEntity{
+          entity_id: descr.eid,
+          object_uuid: descr.uuid,
+          type: descr.entity_type_id,
+          x: x, y: y, z: z,
+          yaw: trunc(yaw), pitch: trunc(pitch),
+          int_field: 0,
+          velocity_x: 0,
+          velocity_y: 0,
+          velocity_z: 0}
         |> write_client_packet(state)
     end
 

@@ -15,7 +15,7 @@ defmodule McEx.World.PlayerTracker do
 
   def player_join(world_id, %PlayerListRecord{} = record) do
     GenServer.call(for_world(world_id), {:player_join, %{record | player_pid: self}})
-    McEx.Registry.reg_world_player(world_id)
+    McEx.Registry.reg_world_player(world_id, record)
   end
 
   def player_leave(world_id) do

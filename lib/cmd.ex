@@ -21,4 +21,22 @@ defmodule Cmd do
       "No player found by that name"
     end
   end
+
+  def get_players(world_id) do
+    McEx.Registry.world_players_get(world_id)
+  end
+
+  def get_player_pid(world_id, player_name) do
+    {player_pid, _} = get_players(world_id)
+    |> Enum.find(fn {_pid, player_info} ->
+      player_name == player_info.name
+    end)
+    player_pid
+  end
+
+  def player_exec(world_id, player_name, fun) do
+    player_pid = get_player_pid(world_id, player_name)
+    GenServer.call(player_pid, {:debug_exec, fun})
+  end
+
 end

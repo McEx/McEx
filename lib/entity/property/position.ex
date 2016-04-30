@@ -12,7 +12,7 @@ defmodule McEx.Entity.Property.Position do
   defp calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}),
   do: {:rel_pos, x0-x, y0-y, z0-z}
 
-  def initial(state) do
+  def initial(_args, state) do
     prop = %{
       pos: {:pos, 0, 100, 0},
       look: {:look, 0, 0},

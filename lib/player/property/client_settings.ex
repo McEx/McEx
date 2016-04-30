@@ -35,7 +35,7 @@ defmodule McEx.Player.Property.ClientSettings do
     end
   end
 
-  def initial(state) do
+  def initial(_args, state) do
     prop = %{
       locale: "en_GB",
       view_distance: 20,

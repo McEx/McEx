@@ -13,7 +13,7 @@ defmodule McEx.Player.Property.Movement do
   * McEx.Entity.Property.Position
   """
 
-  def initial(state) do
+  def initial(_args, state) do
     %{
       pos: {:pos, x, y, z},
       look: {:look, yaw, pitch},
