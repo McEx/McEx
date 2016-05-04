@@ -64,7 +64,7 @@ defmodule McEx.Player.Property.Entities do
   when eid != c_eid do
     {pos, delta_pos, look, on_ground} = args
     {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(delta_pos)
-    {:look, yaw, pitch} = look
+    {yaw, pitch} = look
 
     %Server.Play.EntityMoveLook{
       entity_id: eid,
@@ -93,8 +93,8 @@ defmodule McEx.Player.Property.Entities do
   defp spawn_entity(descr, state) do
     case descr.type do
       :player ->
-        {:pos, x, y, z} = descr.position.pos
-        {:look, yaw, pitch} = descr.position.look
+        {x, y, z} = descr.position.pos
+        {yaw, pitch} = descr.position.look
         %Server.Play.NamedEntitySpawn{
           entity_id: descr.eid,
           player_uuid: descr.uuid,
@@ -109,8 +109,8 @@ defmodule McEx.Player.Property.Entities do
         |> write_client_packet(state)
 
       :object ->
-        {:pos, x, y, z} = descr.position.pos
-        {:look, yaw, pitch} = descr.position.look
+        {x, y, z} = descr.position.pos
+        {yaw, pitch} = descr.position.look
         %Server.Play.SpawnEntity{
           entity_id: descr.eid,
           object_uuid: descr.uuid,

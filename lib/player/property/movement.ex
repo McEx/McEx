@@ -15,8 +15,8 @@ defmodule McEx.Player.Property.Movement do
 
   def initial(_args, state) do
     %{
-      pos: {:pos, x, y, z},
-      look: {:look, yaw, pitch},
+      pos: {x, y, z},
+      look: {yaw, pitch},
     } = Position.get_position(state)
 
     %Server.Play.SpawnPosition{location: {x, y, z}}
@@ -33,16 +33,16 @@ defmodule McEx.Player.Property.Movement do
   end
 
   def handle_client_packet(%Client.Play.Position{} = msg, state) do
-    pos = {:pos, msg.x, msg.y, msg.z}
+    pos = {msg.x, msg.y, msg.z}
     Position.set_position(state, %{pos: pos, on_ground: msg.on_ground})
   end
   def handle_client_packet(%Client.Play.Look{} = msg, state) do
-    look = {:look, msg.yaw, msg.pitch}
+    look = {msg.yaw, msg.pitch}
     Position.set_position(state, %{look: look, on_ground: msg.on_ground})
   end
   def handle_client_packet(%Client.Play.PositionLook{} = msg, state) do
-    pos = {:pos, msg.x, msg.y, msg.z}
-    look = {:look, msg.yaw, msg.pitch}
+    pos = {msg.x, msg.y, msg.z}
+    look = {msg.yaw, msg.pitch}
     Position.set_position(state, %{pos: pos, look: look, on_ground: msg.on_ground})
   end
   def handle_client_packet(%Client.Play.Flying{} = msg, state) do

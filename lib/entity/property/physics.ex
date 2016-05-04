@@ -23,39 +23,29 @@ defmodule McEx.Entity.Property.Physics do
     velocity = prop.velocity
     velocity = velocity
     |> vec3_sub(vec3_mul(velocity, prop.drag))
-    |> vec3_add({0, prop.gravity, 0})
+    |> vec3_add({0, -prop.gravity, 0})
 
 
-    pos = McEx.Entity.Property.Position.get_position(state)
-    {xv, yv, zv} = velocity
-    {:pos, xp, yp, zp} = pos.pos
+    position = McEx.Entity.Property.Position.get_position(state)
 
-    collision_blocks = McEx.Util.DDA3D.point_line_segment({xp, yp, zp}, velocity)
+    collision_blocks = McEx.Util.DDA3D.point_line_segment(position.pos, velocity)
     |> Enum.take(6)
-    |> Enum.map(fn {pos = {x, y, z}, face} ->
-      {pos, get_block({:pos, x, y, z}, state), face}
+    |> Enum.map(fn {pos, face} ->
+      {pos, get_block(pos, state), face}
     end)
     |> Enum.filter(fn {_, block, _} ->
-      block != 0
+      block != 0 and block != 144
     end)
-    {hit, collision} =
+
+    {hit, new_pos} =
       case collision_blocks do
-        [] -> {false, Vec3D.add({xp, yp, zp}, velocity)}
+        [] -> {false, Vec3D.add(position.pos, velocity)}
         [{pos, block, face} | _] ->
           face_point = Vec3D.add(pos, Vec3D.block_face_plane_point(face))
-          hit_loc = Vec3D.ray_plane_intersect({xp, yp, zp}, velocity, face_point, face)
+          hit_loc = Vec3D.ray_plane_intersect(position.pos, velocity, face_point, face)
           {true, hit_loc}
       end
 
-    {col_x, col_y, col_z} = collision
-    new_pos = {:pos, col_x, col_y, col_z}
-    IO.inspect new_pos
-
-    #new_pos = if yp-yv < 60 do
-    #  {:pos, xp-xv, 60, zp-zv}
-    #else
-    #  {:pos, xp-xv, yp-yv, zp-zv}
-    #end
     state = McEx.Entity.Property.Position.set_position(state, %{pos: new_pos})
 
     prop = %{
@@ -67,7 +57,7 @@ defmodule McEx.Entity.Property.Physics do
   end
 
   def get_block(pos, state) do
-    {:pos, x, y, z} = pos
+    {x, y, z} = pos
     chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
     chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
     GenServer.call(chunk_pid, {:get_block, pos})

@@ -75,7 +75,7 @@ defmodule McEx.Chunk do
 
     {:reply, nil, state}
   end
-  def handle_call({:get_block, {:pos, x, y, z}}, _from, state) do
+  def handle_call({:get_block, {x, y, z}}, _from, state) do
     block = Chunk.get_block(state.chunk_resource,
                             {Math.mod_divisor(x, 16), y, Math.mod_divisor(z, 16)})
     {:reply, block, state}

@@ -9,13 +9,13 @@ defmodule McEx.Entity.Property.Position do
   It provides a public API which is usable by other properties.
   """
 
-  defp calc_delta_pos({:pos, x, y, z}, {:pos, x0, y0, z0}),
+  defp calc_delta_pos({x, y, z}, {x0, y0, z0}),
   do: {:rel_pos, x0-x, y0-y, z0-z}
 
   def initial(_args, state) do
     prop = %{
-      pos: {:pos, 0, 100, 0},
-      look: {:look, 0, 0},
+      pos: {0, 100, 0},
+      look: {0, 0},
       on_ground: false,
     }
     set_prop(state, prop)

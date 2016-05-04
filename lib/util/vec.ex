@@ -66,8 +66,17 @@ defmodule McEx.Util.Vec3D do
   def block_face_plane_point({a, b, c}) when (a + b + c) == 1, do: {1, 1, 1}
   def block_face_plane_point({a, b, c}) when (a + b + c) == -1, do: {0, 0, 0}
 
-  def x({x, _, _}), do: x
-  def y({_, y, _}), do: y
-  def z({_, _, z}), do: z
+  defmacro x(var) do
+    quote do: elem(unquote(var), 0)
+  end
+  defmacro y(var) do
+    quote do: elem(unquote(var), 1)
+  end
+  defmacro z(var) do
+    quote do: elem(unquote(var), 2)
+  end
+  #def x({x, _, _}), do: x
+  #def y({_, y, _}), do: y
+  #def z({_, _, z}), do: z
 
 end

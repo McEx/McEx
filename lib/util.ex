@@ -29,11 +29,11 @@ defmodule McEx.Util do
   defmodule Pos do
     Record.defrecord :pos, [:x, :y, :z]
 
-    def to_chunk({:pos, x, _, z}) do
+    def to_chunk({x, _, z}) do
       {:chunk, trunc(x) >>> 4, trunc(z) >>> 4}
     end
 
-    def manhattan_xz_distance({:pos, x1, _, z1}, {:pos, x2, _, z2}) do
+    def manhattan_xz_distance({x1, _, z1}, {x2, _, z2}) do
       abs(x1 - x2) + abs(z1 - z2)
     end
   end
