@@ -46,16 +46,18 @@ defmodule McEx.Entity.Property.Position do
     look = Map.get(update, :look, prop.look)
     on_ground = Map.get(update, :on_ground, prop.on_ground)
 
-    prop = %{prop |
+    new_prop = %{prop |
              pos: pos,
              look: look,
              on_ground: on_ground,
             }
-    state = set_prop(state, prop)
+    state = set_prop(state, new_prop)
 
     value = {pos, delta_pos, look, on_ground}
     state = prop_broadcast(state, :move, value)
-    McEx.Entity.Property.Shards.broadcast_shard(state, :entity_move, value)
+    if prop != new_prop do
+      McEx.Entity.Property.Shards.broadcast_shard(state, :entity_move, value)
+    end
 
     state
   end
