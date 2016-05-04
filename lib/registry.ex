@@ -31,6 +31,16 @@ defmodule McEx.Registry do
   def world_players_get(world_id), do:
   :gproc.lookup_values(world_players_key(world_id))
 
+  # Entities
+  def world_entities_key(world_id), do:
+  {:p, :l, {:world_entities, world_id}}
+
+  def reg_world_entity(world_id, val \\ nil), do:
+  :gproc.reg(world_entities_key(world_id), val)
+
+  def world_entities_send(world_id, message), do:
+  :gproc.send(world_entities_key(world_id), message)
+
   # Chunk servers
   def chunk_server_key(world_id, pos), do:
   {:n, :l, {:world_chunks, world_id, pos}}

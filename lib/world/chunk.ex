@@ -3,6 +3,7 @@ defmodule McEx.Chunk do
   alias McEx.Net.Connection.Write
   alias McChunk.Chunk
   alias McProtocol.Packet.Server
+  alias McEx.Util.Math
 
   def start_link(world_id, pos, opts \\ []) do
     GenServer.start_link(__MODULE__, {world_id, pos}, opts)
@@ -61,17 +62,23 @@ defmodule McEx.Chunk do
   def handle_cast(:stop_chunk, state) do
     {:stop, :normal, state}
   end
+  def handle_cast(:gen_chunk, state) do
+    chunk = gen_chunk(state.pos)
+    {:noreply, %{state | chunk_resource: chunk}}
+  end
   def handle_call({:block_destroy, {x, y, z}}, _from, state) do
-    Chunk.set_block(state.chunk_resource, {rem(x, 16), y, rem(z, 16)}, 0)
+    Chunk.set_block(state.chunk_resource,
+                    {Math.mod_divisor(x, 16), y, Math.mod_divisor(z, 16)}, 0)
 
     message = {:world_event, :chunk, {:block_destroy, {x, y, z}}}
     McEx.Registry.world_players_send(state.world_id, message)
 
     {:reply, nil, state}
   end
-  def handle_cast(:gen_chunk, state) do
-    chunk = gen_chunk(state.pos)
-    {:noreply, %{state | chunk_resource: chunk}}
+  def handle_call({:get_block, {:pos, x, y, z}}, _from, state) do
+    block = Chunk.get_block(state.chunk_resource,
+                            {Math.mod_divisor(x, 16), y, Math.mod_divisor(z, 16)})
+    {:reply, block, state}
   end
 
   def terminate(reason, _state) do

@@ -18,7 +18,8 @@ defmodule McEx.World.Supervisor do
       worker(McEx.Player.KeepAliveSender, [world_id]),
       worker(McEx.World.PlayerTracker, [world_id]),
 
-      supervisor(McEx.World.EntitySupervisor, [world_id])
+      supervisor(McEx.World.EntitySupervisor, [world_id]),
+      worker(McEx.World.Ticker, [world_id]),
     ]
 
     opts = [strategy: :one_for_all]

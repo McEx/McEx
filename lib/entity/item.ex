@@ -14,6 +14,8 @@ defmodule McEx.Entity.Item do
   end
 
   def init({world_id, opts}) do
+    McEx.Registry.reg_world_entity(world_id)
+
     uuid = McProtocol.UUID.uuid4
     prop_options = %{
       McEx.Entity.Property.Spawn =>
@@ -21,6 +23,11 @@ defmodule McEx.Entity.Item do
         type: :object,
         entity_type_id: 2,
         uuid: uuid,
+      },
+      McEx.Entity.Property.Physics =>
+      %{
+        gravity: 0.04,
+        drag: 0.02,
       },
     }
 

@@ -118,9 +118,9 @@ defmodule McEx.Player.Property.Entities do
           x: x, y: y, z: z,
           yaw: trunc(yaw), pitch: trunc(pitch),
           int_field: 0,
-          velocity_x: 0,
-          velocity_y: 0,
-          velocity_z: 0}
+          velocity_x: 100,
+          velocity_y: 1,
+          velocity_z: 1}
         |> write_client_packet(state)
     end
 
