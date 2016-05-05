@@ -16,21 +16,19 @@ defmodule McEx.Player.Property.BlockInteract do
     end
   end
 
-  def dig_status(:finish, {x, _, z} = location, face, state) do
-    chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
-    chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
-    GenServer.call(chunk_pid, {:block_destroy, location})
+  def dig_status(:finish, location, face, state) do
+    #chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
+    #chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
+    #GenServer.call(chunk_pid, {:block_destroy, location})
+    McEx.Chunk.set_block(state.world_id, location, 0)
     state
   end
   def dig_status(_, _, _, state), do: state
 
-  # TODO: This should NOT be a world event.
-  # It should ideally be some kind of regional event, possibly
-  # unified with entity regions?
-  def handle_world_event(:chunk, {:block_destroy, location}, state) do
-    %Server.Play.BlockChange{
-      location: location,
-      type: 0}
+  def handle_chunk_event(_pos, :set_block, {pos, block}, state) do
+    IO.inspect(%Server.Play.BlockChange{
+      location: pos,
+      type: block})
     |> write_client_packet(state)
     state
   end

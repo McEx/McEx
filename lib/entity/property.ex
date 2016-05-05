@@ -14,6 +14,9 @@ defmodule McEx.Entity.Property do
       def handle_entity_msg(:shard_broadcast, {pos, eid, event_name, value}, state) do
         handle_shard_broadcast(pos, event_name, eid, value, state)
       end
+      def handle_entity_msg(:chunk_event, {pos, event_name, value}, state) do
+        handle_chunk_event(pos, event_name, value, state)
+      end
       def handle_entity_msg(:shard_member_broadcast,
                             {pos, eid, event_name, value}, state) do
         handle_shard_member_broadcast(pos, event_name, eid, value, state)
@@ -28,6 +31,7 @@ defmodule McEx.Entity.Property do
       end
 
       def handle_world_event(_event_name, _value, state), do: state
+      def handle_chunk_event(_pos, _event_name, _value, state), do: state
       def handle_info_message(_data, state), do: state
 
       def handle_shard_broadcast(_pos, _event_name, _eid, _args, state), do: state

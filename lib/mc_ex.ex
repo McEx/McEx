@@ -11,9 +11,6 @@ defmodule McEx.Supervisor do
     Supervisor.start_link(__MODULE__, :ok)
   end
 
-  @entity_id_gen_name McEx.EntityIdGenerator
-  @net_name McEx.Net
-
   def init(:ok) do
     config = %{
       world_id: :test_world,

@@ -29,12 +29,14 @@ defmodule McEx.Player.Property.Chunks do
   end
 
   def load_chunk(state, chunk_manager, chunk_pos) do
+    McEx.Registry.reg_chunk_listener(state.world_id, chunk_pos)
     McEx.Chunk.Manager.lock_chunk(chunk_manager, chunk_pos, self)
     {:ok, chunk} = McEx.Chunk.Manager.get_chunk(chunk_manager, chunk_pos)
     ret = McEx.Chunk.send_chunk(chunk, state.connection)
     ret
   end
   def unload_chunk(state, chunk_manager, chunk_pos) do
+    McEx.Registry.unreg_chunk_listener(state.world_id, chunk_pos)
     McEx.Chunk.Manager.release_chunk(chunk_manager, chunk_pos, self)
     {:chunk, x, z} = chunk_pos
 

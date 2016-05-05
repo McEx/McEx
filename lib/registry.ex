@@ -51,6 +51,19 @@ defmodule McEx.Registry do
   def chunk_server_pid(world_id, pos), do:
   :gproc.lookup_pid(chunk_server_key(world_id, pos))
 
+  # Chunk listeners
+  def chunk_listener_key(world_id, pos), do:
+  {:n, :l, {:chunk_listener, world_id, pos}}
+
+  def reg_chunk_listener(world_id, pos), do:
+  :gproc.reg(chunk_listener_key(world_id, pos))
+
+  def unreg_chunk_listener(world_id, pos), do:
+  :gproc.unreg(chunk_listener_key(world_id, pos))
+
+  def chunk_listeners_send(world_id, pos, message), do:
+  :gproc.send(chunk_listener_key(world_id, pos), message)
+
   # Shards
   def shard_server_key(world_id, pos), do:
   {:n, :l, {:world_shards, world_id, pos}}
