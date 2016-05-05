@@ -27,7 +27,7 @@ defmodule McEx.Entity.Property.Shards do
     prop = %{
       current_shard: nil,
       shards: MapSet.new,
-      view_distance: 8,
+      view_distance: Application.get_env(:mc_ex, :view_distance, 8),
     }
     state = set_prop(state, prop)
     state = join_leave_shards(state)
