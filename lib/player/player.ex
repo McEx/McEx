@@ -58,6 +58,7 @@ defmodule McEx.Player do
     McEx.Player.Property.Chunks,
     McEx.Player.Property.BlockInteract,
     McEx.Player.Property.Inventory,
+    McEx.Player.Property.Chat,
   ]
 
   def init({world_id, options}) do

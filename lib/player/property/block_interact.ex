@@ -26,9 +26,9 @@ defmodule McEx.Player.Property.BlockInteract do
   def dig_status(_, _, _, state), do: state
 
   def handle_chunk_event(_pos, :set_block, {pos, block}, state) do
-    IO.inspect(%Server.Play.BlockChange{
+    %Server.Play.BlockChange{
       location: pos,
-      type: block})
+      type: block}
     |> write_client_packet(state)
     state
   end
