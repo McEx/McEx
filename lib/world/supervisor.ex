@@ -5,8 +5,10 @@ defmodule McEx.World.Supervisor do
     Supervisor.start_link(__MODULE__, world_id)
   end
 
-  def init(world_id) do
+  def init(config) do
+    world_id = config.world_id
     children = [
+      worker(McEx.World.ConfigServer, [config]),
       worker(McEx.EntityIdGenerator, [world_id]),
 
       supervisor(McEx.Chunk.ChunkSupervisor, [world_id]),

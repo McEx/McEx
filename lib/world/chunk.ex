@@ -29,16 +29,6 @@ defmodule McEx.Chunk do
         pos: pos}}
   end
 
-  defp gen_chunk({:chunk, cx, cz}) do
-    data = McEx.Native.Chunk.gen_chunk_raw({cx, cz})
-    {sections, ""} = Enum.reduce(0..15, {[], data}, fn sy, {sections, data} ->
-      <<section_blocks::binary-size(4096), data::binary>> = data
-      section = McChunk.Section.new_from_old(section_blocks)
-      {[section | sections], data}
-    end)
-    %Chunk{Chunk.new | sections: Enum.reverse(sections)}
-  end
-
   defp assemble_chunk_packet(state) do
     {data, written_mask} = Chunk.encode(state.chunk_resource, {true, true, 0})
 
@@ -63,7 +53,10 @@ defmodule McEx.Chunk do
     {:stop, :normal, state}
   end
   def handle_cast(:gen_chunk, state) do
-    chunk = gen_chunk(state.pos)
+    #chunk = gen_chunk(state.pos)
+    {gen_module, gen_opts} = McEx.World.ConfigServer.get_key(state.world_id,
+                                                             :world_generator)
+    chunk = apply(gen_module, :generate, [state.pos, gen_opts])
     {:noreply, %{state | chunk_resource: chunk}}
   end
   def handle_call({:block_destroy, {x, y, z}}, _from, state) do

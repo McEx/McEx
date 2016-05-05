@@ -15,9 +15,14 @@ defmodule McEx.Supervisor do
   @net_name McEx.Net
 
   def init(:ok) do
+    config = %{
+      world_id: :test_world,
+      world_generator: {McEx.World.Chunk.Generator.SimpleFlatworld, nil},
+    }
+
     children = [
       worker(McProtocol.Crypto.ServerKeyProvider, [[name: McEx.ServerKeyProvider]]),
-      supervisor(McEx.World.Supervisor, [:test_world]),
+      supervisor(McEx.World.Supervisor, [config]),
       supervisor(McEx.Net.Supervisor, [])
     ]
 
