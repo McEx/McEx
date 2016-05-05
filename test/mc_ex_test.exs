@@ -4,7 +4,12 @@ defmodule McExTest do
   test "server player join" do
     world_id = :sw1
 
-    {:ok, supervisor} = McEx.World.Supervisor.start_link(:sw1)
+    config = %{
+      world_id: world_id,
+      world_generator: {McEx.World.Chunk.Generator.SimpleFlatworld, nil},
+    }
+
+    {:ok, supervisor} = McEx.World.Supervisor.start_link(config)
     {:ok, player_pid} = McEx.World.EntitySupervisor.start_entity(
       world_id, McEx.Player,
       %{
