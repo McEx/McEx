@@ -11,6 +11,7 @@ branches:
 cache:
   directories:
   - deps
+  - _build
 
 install:
   - curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh -s -- --yes
