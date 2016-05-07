@@ -3,7 +3,8 @@ defmodule McEx.Native.Chunk do
   @on_load {:init, 0}
 
   def init do
-    :ok = Rustler.load_nif("mcex_chunk")
+    #:ok = Rustler.load_nif("mcex_chunk")
+    :ok
   end
 
   def n_create, do: exit(:nif_library_not_loaded)
