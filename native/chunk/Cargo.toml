@@ -10,5 +10,5 @@ crate_type = ["dylib"]
 [dependencies]
 libc = ">=0.1"
 byteorder = "0.3.11"
-rustler = "=0.8.1"
-rustler_codegen = "=0.8.1"
+rustler = "=0.8.3"
+rustler_codegen = "=0.8.3"

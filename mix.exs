@@ -43,7 +43,7 @@ defmodule McEx.Mixfile do
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:mc_chunk, github: "McEx/McChunk"},
      {:mc_protocol, github: "McEx/McProtocol"},
-     {:rustler, "~> 0.0.5"},
+     {:rustler, "~> 0.0.7"},
      {:excoveralls, "~> 0.5", only: :test}]
   end
 end
