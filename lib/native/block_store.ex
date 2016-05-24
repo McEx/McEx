@@ -5,7 +5,8 @@ defmodule McEx.Native.BlockStore do
   @behaviour McChunk.BlockStore
 
   def init do
-    :ok = Rustler.load_nif("mc_chunk_native")
+    #:ok = Rustler.load_nif("mc_chunk_native")
+    :ok
   end
 
   def n_new(_size), do: nil

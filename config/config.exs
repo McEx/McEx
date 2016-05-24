@@ -5,4 +5,4 @@ config :mc_ex,
   auth: [online: true]
 
 config :mc_chunk,
-  block_store: McEx.Native.BlockStore
+  block_store: McChunk.BitArray
