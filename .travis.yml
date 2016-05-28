@@ -11,6 +11,7 @@ branches:
 cache:
   directories:
   - deps
+  - _build
 
 install:
   - curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh -s -- --yes
@@ -22,6 +23,7 @@ script:
   - mix test
 
 notifications:
+  webhooks: http://travis.lunarco.de/mcex
   irc:
     on_success: change
     on_failure: change
