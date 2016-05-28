@@ -1,10 +1,5 @@
-defmodule McEx.World.AnvilRegion do
+defmodule McEx.World.Anvil.Region do
   # Client
-  def test do
-    {:ok, pid} = start_link("./testdata/", {0, 0})
-    GenServer.call(pid, {:read_chunk, {0, 0}})
-    pid
-  end
   def start_link(file_path, pos) do
     GenServer.start_link(__MODULE__, {file_path, pos})
   end
@@ -23,6 +18,7 @@ defmodule McEx.World.AnvilRegion do
     {:ok, locations} = :file.pread(device, 0, 4096)
 
     chunk_map = chunk_map_from_header(locations, :array.new(1024, default: nil, fixed: true))
+    IO.inspect(:array.to_list(chunk_map), limit: 10000)
 
     {:ok, %State{
       device: device,
@@ -53,7 +49,7 @@ defmodule McEx.World.AnvilRegion do
     IO.iodata_to_binary(data_dec)
   end
   def decode_chunk_data(data) do
-    nbt = McEx.NBT.Read.read(data)
+    nbt = McProtocol.NBT.Read.read(data)
   end
 
   def read_sectors(device, offset, count) do

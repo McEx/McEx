@@ -35,6 +35,15 @@ defmodule McEx.Util.AABB do
     }
   end
 
+  def expand(%__MODULE__{x: {x0, x1}, y: {y0, y1}, z: {z0, z1}},
+             {xe, ye, ze}) do
+    %__MODULE__{
+      x: (if xe > 0, do: {x0, x1+xe}, else: {x0+xe, x1}),
+      y: (if ye > 0, do: {y0, y1+ye}, else: {y0+ye, y1}),
+      z: (if ze > 0, do: {z0, z1+ze}, else: {z0+ze, z1}),
+    }
+  end
+
   def points(%__MODULE__{x: {x0, x1}, y: {y0, y1}, z: {z0, z1}}) do
     {{x0, y0, z0}, {x1, y1, z1}}
   end

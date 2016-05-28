@@ -1,0 +1,36 @@
+digraph McEx {
+
+  # Groups
+  #player_process_group[label="Players process group\n(singleton, per world server)"];
+  #shard_process_group_member[label="Shard member process group\n(multiple, one per shard)"];
+
+  #player[label="Player entity process"];
+  #player -> player_process_group [style=dotted];
+  #player -> shard_process_group_member [style=dotted, arrowhead=vee];
+
+  #a -> b [arrowhead=none];
+  #b[label="Testing", shape=square];
+
+  subgraph cluster_player_entity {
+    label="Player Entity";
+
+    socket [label="Client socket", shape=invhouse];
+    socket_reader [label="Socket reader"];
+    socket_writer [label="Socket writer"];
+    socket_state_manager [label="Socket state mananger"];
+    mcex_player_entity [label="Player Entity"];
+
+    socket -> socket_reader;
+    socket_writer -> socket;
+    socket_state_manager -> socket_writer;
+    socket_reader -> socket_state_manager;
+    mcex_player_entity -> socket_state_manager;
+    socket_state_manager -> mcex_player_entity;
+  }
+
+  subgraph cluster_chunk_subsystem {
+    label="Chunk subsystem";
+
+    chunk_manager [label="Chunk manager"];
+  }
+}

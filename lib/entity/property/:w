@@ -60,26 +60,25 @@ defmodule McEx.Entity.Property.Physics do
     position = McEx.Entity.Property.Position.get_position(state)
 
     entity_aabb = AABB.from_pos_size(position.pos, prop.size)
-    # Box the movement occurs within
     movement_area_aabb = AABB.expand(entity_aabb, movement)
 
     movement_area_block_positions = movement_area_aabb
     |> AABB.blocks_in
     |> Enum.take(64)
-    # Fetch all blocks within the movement area
     movement_area_blocks = movement_area_block_positions
     |> Enum.map(fn pos -> {AABB.block_aabb(pos), get_block(pos, state)} end)
 
-    # Perform actual collision
-    movement_clamped = do_collision(entity_aabb, movement, movement_area_blocks)
+    movement_delta = do_collision(entity_aabb, movement, movement_area_blocks)
 
-    new_pos = Vec3D.add(position.pos, movement_clamped)
+    new_pos = Vec3D.add(position.pos, movement_delta)
+
     state = McEx.Entity.Property.Position.set_position(state, %{pos: new_pos})
 
     prop = %{
       prop |
       velocity: velocity,
     }
+
     set_prop(state, prop)
   end
 

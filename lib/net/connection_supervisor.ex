@@ -11,7 +11,7 @@ defmodule McEx.Net.ConnectionSupervisor do
 
   def init(:ok) do
     children = [
-      worker(McProtocol.Acceptor.Connection, [], restart: :temporary)
+      worker(McProtocol.Connection.Manager, [], restart: :temporary)
     ]
 
     opts = [
