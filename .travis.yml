@@ -2,7 +2,9 @@ sudo: required
 
 language: elixir
 elixir:
-  - 1.2.4
+  - 1.2.5
+otp_release:
+  - 18.3
 
 branches:
   only:
