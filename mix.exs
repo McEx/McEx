@@ -8,7 +8,7 @@ defmodule McEx.Mixfile do
      elixirc_paths: ["lib", "plugins"],
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     compilers: [:rustler] ++ Mix.compilers,
+     #compilers: [:rustler] ++ Mix.compilers,
      deps: deps,
      test_coverage: [tool: ExCoveralls],
      preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test],
