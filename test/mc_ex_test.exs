@@ -9,17 +9,24 @@ defmodule McExTest do
       world_generator: {McEx.World.Chunk.Generator.SimpleFlatworld, nil},
     }
 
+    self_proc = self
+
     {:ok, supervisor} = McEx.World.Supervisor.start_link(config)
     {:ok, player_pid} = McEx.World.EntitySupervisor.start_entity(
       world_id, McEx.Player,
       %{
-        connection: %McProtocol.Acceptor.ProtocolState.Connection{control: self, read: self, write: self},
+        connection: %McProtocol.Acceptor.ProtocolState.Connection{
+          control: self,
+          reader: self,
+          writer: self,
+          write: fn(struct) -> send(self_proc, {:write_struct, struct}) end,
+        },
         identity: %{online: false, name: "Testplayer", uuid: McProtocol.UUID.uuid4},
         entity_id: 100,
       }
     )
 
-    assert_receive {:"$gen_cast", {:write_struct, %McProtocol.Packet.Server.Play.PlayerInfo{}}}
+    assert_receive {:write_struct, %McProtocol.Packet.Server.Play.PlayerInfo{}}
 
     :ok = Supervisor.stop(supervisor, :normal)
   end
