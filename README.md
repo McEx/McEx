@@ -1,4 +1,4 @@
-# McEx
+# McEx [![Build Status](https://travis-ci.org/McEx/McEx.svg?branch=master)](https://travis-ci.org/McEx/McEx) [![Build Status](https://img.shields.io/badge/Minecraft%20Version-1.9.2-green.svg)](http://wiki.vg/Protocol_version_numbers)
 
 McEx is a Minecraft server written in Elixir and Rust. All the networking and logic is implemented in Elixir, while the low level chunk data handling is done in Rust.
 
