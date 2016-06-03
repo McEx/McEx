@@ -22,12 +22,12 @@ defmodule McEx.World.Shard do
     :ok = GenServer.call(shard_pid, {:stop_listen, self})
   end
 
-  def start_membership(world_id, pos, eid, from_shard \\ nil) do
+  def start_membership(world_id, pos, eid, _from_shard \\ nil) do
     shard_pid = McEx.Registry.shard_server_pid(world_id, pos)
     McEx.Registry.reg_shard_member(world_id, pos)
     :ok = GenServer.call(shard_pid, {:start_membership, self, eid})
   end
-  def stop_membership(world_id, pos, to_shard \\ nil) do
+  def stop_membership(world_id, pos, _to_shard \\ nil) do
     shard_pid = McEx.Registry.shard_server_pid(world_id, pos)
     McEx.Registry.unreg_shard_member(world_id, pos)
     :ok = GenServer.call(shard_pid, {:stop_membership, self})

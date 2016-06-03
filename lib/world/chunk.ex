@@ -1,6 +1,5 @@
 defmodule McEx.Chunk do
   use GenServer
-  alias McEx.Net.Connection.Write
   alias McChunk.Chunk
   alias McProtocol.Packet.Server
   alias McEx.Util.Math

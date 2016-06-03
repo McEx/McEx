@@ -25,14 +25,6 @@ defmodule McEx.Player.Property.Inventory do
     set_prop(state, prop)
   end
 
-  defp send_slot(state, window_id, slot_id, item) do
-    %Server.Play.SetSlot{
-      window_id: window_id,
-      slot: slot_id,
-      item: item}
-    |> write_client_packet(state)
-  end
-
   # Window interaction
 
   # Window click
@@ -42,6 +34,12 @@ defmodule McEx.Player.Property.Inventory do
     else
       state
     end
+  end
+
+  def handle_client_packet(%Client.Play.BlockDig{status: 4}, state) do
+    McEx.World.EntitySupervisor.start_entity(
+      state.world_id, McEx.Entity.Item, %{})
+    state
   end
 
   # When not handling a case, disapprove.
@@ -57,10 +55,12 @@ defmodule McEx.Player.Property.Inventory do
     |> send_inventory
   end
 
-  def handle_client_packet(%Client.Play.BlockDig{status: 4}, state) do
-    McEx.World.EntitySupervisor.start_entity(
-      state.world_id, McEx.Entity.Item, %{})
-    state
+  defp send_slot(state, window_id, slot_id, item) do
+    %Server.Play.SetSlot{
+      window_id: window_id,
+      slot: slot_id,
+      item: item}
+    |> write_client_packet(state)
   end
 
   # Public API

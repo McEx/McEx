@@ -1,6 +1,8 @@
 defmodule McEx.Player.Property.Entities do
   use McEx.Player.Property
 
+  alias McEx.Entity.Message
+
   @moduledoc """
   This handles everything related to spawning and despawning entities on the client.
 
@@ -52,19 +54,14 @@ defmodule McEx.Player.Property.Entities do
     state
   end
 
-  def delta_pos_to_short({:rel_pos, dx, dy, dz}),
-  do: {:rel_pos_short, round(dx*4096), round(dy*4096), round(dz*4096)}
-  def deg_to_byte(deg), do: round(deg / 360 * 256)
-
   @doc """
   Sends position updates to the client for entities in shards we are listening to.
   This message is sent by McEx.Entity.Property.Position.
   """
-  def handle_shard_broadcast(pos, :entity_move, eid, args, state = %{eid: c_eid})
-  when eid != c_eid do
-    {pos, delta_pos, look, on_ground} = args
-    {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(delta_pos)
-    {yaw, pitch} = look
+  def handle_shard_broadcast(pos, :broadcast, eid, %Message.Move{} = msg,
+                             state = %{eid: c_eid}) when eid != c_eid do
+    {:rel_pos_short, dx, dy, dz} = delta_pos_to_short(msg.delta_pos)
+    {yaw, pitch} = msg.look
 
     %Server.Play.EntityMoveLook{
       entity_id: eid,
@@ -73,11 +70,15 @@ defmodule McEx.Player.Property.Entities do
       d_z: dz,
       yaw: deg_to_byte(yaw),
       pitch: deg_to_byte(pitch),
-      on_ground: on_ground}
+      on_ground: msg.on_ground}
     |> write_client_packet(state)
 
     state
   end
+
+  def delta_pos_to_short({:rel_pos, dx, dy, dz}),
+  do: {:rel_pos_short, round(dx*4096), round(dy*4096), round(dz*4096)}
+  def deg_to_byte(deg), do: round(deg / 360 * 256)
 
   @doc """
   This handles the responses we get to the :entity_catchup message sent by

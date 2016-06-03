@@ -3,6 +3,7 @@ defmodule McEx.Player.Property.Chunks do
   use McEx.Util
 
   alias McProtocol.Packet.Server
+  alias McEx.Entity.Message
 
   def initial(_args, state) do
     prop = %{
@@ -76,7 +77,7 @@ defmodule McEx.Player.Property.Chunks do
     %{prop | loaded_chunks: loaded_chunks}
   end
 
-  def handle_prop_event(:move, {pos, delta_pos, look, on_ground} = ev, state) do
+  def handle_prop_event(%Message.Move{pos: pos} = msg, state) do
     prop = get_prop(state)
 
     # If we have moved more than 8 blocks away from the last chunk load on the
@@ -88,6 +89,6 @@ defmodule McEx.Player.Property.Chunks do
     else
       state
     end
-
   end
+
 end

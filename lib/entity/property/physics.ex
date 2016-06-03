@@ -1,7 +1,7 @@
 defmodule McEx.Entity.Property.Physics do
   use McEx.Entity.Property
 
-  alias McEx.Util.{Vec3D, AABB, DDA3D}
+  alias McEx.Util.{Vec3D, AABB}
 
   def vec3_mul({x0, y0, z0}, {x1, y1, z1}), do: {x0*x1, y0*y1, z0*z1}
   def vec3_mul({x0, y0, z0}, fac), do: {x0*fac, y0*fac, z0*fac}
@@ -84,7 +84,7 @@ defmodule McEx.Entity.Property.Physics do
   end
 
   def get_block(pos, state) do
-    {x, y, z} = pos
+    {x, _y, z} = pos
     chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
     chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
     GenServer.call(chunk_pid, {:get_block, pos})

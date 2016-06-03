@@ -10,7 +10,7 @@ defmodule McEx.World.Chunk.Generator.SimpleFlatworld do
     end)
   end
 
-  def generate({:chunk, cx, cz}, _opts) do
+  def generate({:chunk, _cx, _cz}, _opts) do
     section = McChunk.Section.new(palette: [0, 2, 3, 7])
     |> set_layer(0, 7)
     |> set_layer(1, 3)

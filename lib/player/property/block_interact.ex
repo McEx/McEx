@@ -16,7 +16,7 @@ defmodule McEx.Player.Property.BlockInteract do
     end
   end
 
-  def dig_status(:finish, location, face, state) do
+  def dig_status(:finish, location, _face, state) do
     #chunk_pos = {:chunk, round(Float.floor(x / 16)), round(Float.floor(z / 16))}
     #chunk_pid = McEx.Registry.chunk_server_pid(state.world_id, chunk_pos)
     #GenServer.call(chunk_pid, {:block_destroy, location})

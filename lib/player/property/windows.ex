@@ -52,21 +52,21 @@ defmodule McEx.Player.Property.Windows do
   #end
 
   # Apology transaction packet
-  def handle_client_packet(%Client.Play.Transaction{} = packet, state) do
+  def handle_client_packet(%Client.Play.Transaction{} = _packet, state) do
     state
   end
 
   # Enchantment window enchant click
-  def handle_client_packet(%Client.Play.EnchantItem{} = packet, state) do
+  def handle_client_packet(%Client.Play.EnchantItem{} = _packet, state) do
     state
   end
 
   # Window click
-  def handle_client_packet(%Client.Play.WindowClick{} = packet, state) do
+  def handle_client_packet(%Client.Play.WindowClick{} = _packet, state) do
     state
   end
 
-  def handle_client_packet(%Client.Play.SetCreativeSlot{} = msg, state) do
+  def handle_client_packet(%Client.Play.SetCreativeSlot{} = _packet, state) do
     state
   end
 
@@ -126,8 +126,10 @@ defmodule McEx.Player.Property.Windows do
         window_id: window_id}
       |> write_client_packet(state)
 
-      set_prop(state, prop)
-      |> prop_broadcast(:window_close, window_id)
+      # TODO TODO TODO
+      #set_prop(state, prop)
+      #|> prop_broadcast(:window_close, window_id)
+      state
     else
       state
     end

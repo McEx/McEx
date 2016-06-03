@@ -62,7 +62,7 @@ defmodule McEx.Player do
   ]
 
   def init({world_id, options}) do
-    %{online: authed, name: name, uuid: uuid} = options.identity
+    %{name: name, uuid: uuid} = options.identity
     Logger.info("User #{name} joined with uuid #{McProtocol.UUID.hex uuid}")
     Process.monitor(options.connection.control)
 

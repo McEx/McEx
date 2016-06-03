@@ -4,6 +4,7 @@ defmodule McEx.Entity.Property.Shards do
   require Logger
 
   alias McEx.Math
+  alias McEx.Entity.Message
 
   @moduledoc """
   Handles shard membership for an entity.
@@ -41,7 +42,7 @@ defmodule McEx.Entity.Property.Shards do
 
   Does shard transitioning.
   """
-  def handle_prop_event(:move, _, state) do
+  def handle_prop_event(%Message.Move{}, state) do
     join_leave_shards(state)
   end
 
@@ -185,6 +186,11 @@ defmodule McEx.Entity.Property.Shards do
     McEx.World.Shard.broadcast_members(state.world_id, prop.current_shard,
                                        event_id, state.eid, value)
     state
+  end
+
+  def current_shard(state) do
+    prop = get_prop(state)
+    prop.current_shard
   end
 
 end

@@ -6,7 +6,7 @@ defmodule McEx.World.Chunk.Generator.VoxelWorldgen do
 
   def generate({:chunk, cx, cz}, _opts) do
     data = McEx.Native.Chunk.gen_chunk_raw({cx, cz})
-    {sections, ""} = Enum.reduce(0..15, {[], data}, fn sy, {sections, data} ->
+    {sections, ""} = Enum.reduce(0..15, {[], data}, fn _sy, {sections, data} ->
       <<section_blocks::binary-size(4096), data::binary>> = data
       section = McChunk.Section.new_from_old(section_blocks)
       {[section | sections], data}

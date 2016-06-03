@@ -1,5 +1,4 @@
 defmodule McEx.Net.HandlerClauses do
-  alias McEx.Player
   alias McProtocol.Packet.{Server, Server}
   require Logger
 

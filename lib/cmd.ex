@@ -10,7 +10,7 @@ defmodule Cmd do
   end
   def kick(player) do
     {player_pid, _} = Enum.find(:gproc.lookup_values({:p, :l, :server_player}), 
-    fn({pid, {name, _uuid}}) ->
+    fn({_pid, {name, _uuid}}) ->
       name == player
     end)
 

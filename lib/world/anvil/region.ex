@@ -28,12 +28,12 @@ defmodule McEx.World.Anvil.Region do
     }}
   end
 
-  def handle_call({:read_chunk, pos={x, z}}, _from, state) do
+  def handle_call({:read_chunk, pos={_x, _z}}, _from, state) do
     IO.inspect read_chunk(state, pos)
     {:reply, 0, state}
   end
 
-  def read_chunk(state, pos={x, z}) do
+  def read_chunk(state, pos={_x, _z}) do
     index = chunk_coords_to_index(pos)
     {_, _, offset, count} = :array.get(index, state.chunk_map)
     <<length::big-unsigned-integer-4*8, rest::binary>> = read_sectors(state.device, offset, count)
@@ -49,7 +49,7 @@ defmodule McEx.World.Anvil.Region do
     IO.iodata_to_binary(data_dec)
   end
   def decode_chunk_data(data) do
-    nbt = McProtocol.NBT.Read.read(data)
+    McProtocol.NBT.Read.read(data)
   end
 
   def read_sectors(device, offset, count) do

@@ -34,7 +34,7 @@ defmodule McEx.Net.Handler do
     {:reply, transitions, state}
   end
 
-  def handle_call({:handle, packet_data, stash}, _from,  state) do
+  def handle_call({:handle, packet_data, _stash}, _from,  state) do
     packet_data = packet_data |> McProtocol.Packet.In.fetch_packet
 
     unless [

@@ -29,16 +29,19 @@ defmodule McEx.Entity.Property do
       def handle_entity_msg(msg_type, value, state) do
         raise "Entity message type #{inspect msg_type} not handled in property."
       end
+      def handle_entity_msg(:broadcast, data, state) do
+        handle_broadcast(data, state)
+      end
 
       def handle_world_event(_event_name, _value, state), do: state
       def handle_chunk_event(_pos, _event_name, _value, state), do: state
       def handle_info_message(_data, state), do: state
 
       def handle_shard_broadcast(_pos, _event_name, _eid, _args, state), do: state
-      def handle_shard_member_broadcast(_pos, _event_name, _eid, _args, state),
-      do: state
+      def handle_shard_member_broadcast(_pos, _event_name, _eid, _args, state), do: state
+      def handle_broadcast(data, state), do: state
 
-      def handle_prop_event(_, _, state), do: state
+      def handle_prop_event(_, state), do: state
       def handle_prop_collect(_, _, state), do: {nil, state}
 
     end
@@ -50,7 +53,8 @@ defmodule McEx.Entity.Property do
       @before_compile McEx.Entity.Property
 
       import McEx.Entity.Property, only: [get_prop: 1, set_prop: 2,
-                                          prop_broadcast: 3,
+                                          broadcast: 2,
+                                          prop_broadcast: 2,
                                           prop_collect: 3]
     end
   end
@@ -68,9 +72,12 @@ defmodule McEx.Entity.Property do
     end
   end
 
-  def prop_broadcast(state, event_id, value) do
+  def broadcast(state, message) do
+    McEx.Entity.Message.broadcast_for_entity(state, message)
+  end
+  def prop_broadcast(state, message) do
     Enum.reduce(state.properties, state, fn({mod, _}, state) ->
-      apply(mod, :handle_prop_event, [event_id, value, state])
+      apply(mod, :handle_prop_event, [message, state])
     end)
   end
   def prop_collect(state, event_id, value) do

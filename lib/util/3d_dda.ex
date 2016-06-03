@@ -37,7 +37,7 @@ defmodule McEx.Util.DDA3D do
   end
 
   def compare(sign, pos, lim) when sign == -1, do: lim >= pos
-  def compare(sign, pos, lim) when sign == 0, do: true
+  def compare(sign, _pos, _lim) when sign == 0, do: true
   def compare(sign, pos, lim) when sign == 1, do: pos >= lim
 
   @doc """

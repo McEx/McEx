@@ -1,7 +1,7 @@
 defmodule McEx.Player.Property.PlayerList do
   use McEx.Player.Property
 
-  alias McProtocol.Packet.{Client, Server}
+  alias McProtocol.Packet.{Server}
 
   def initial(_args, state) do
     McEx.World.PlayerTracker.player_join(state.world_id,

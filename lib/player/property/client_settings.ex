@@ -8,7 +8,6 @@ defmodule McEx.Player.Property.ClientSettings do
   """
 
   alias McProtocol.Packet.Client
-  alias McProtocol.Packet.Server
 
   defmodule SkinParts do
     defstruct(
