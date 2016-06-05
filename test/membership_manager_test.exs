@@ -1,7 +1,7 @@
 defmodule McEx.MembershipManagerTest do
   use ExUnit.Case, async: true
 
-  alias McEx.MembershipManager
+  alias McEx.Util.MembershipManager
 
   test "init working" do
     MembershipManager.init([])
