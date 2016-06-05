@@ -1,7 +1,7 @@
 defmodule McEx.World.Shard do
   use GenServer
 
-  alias McEx.MembershipManager
+  alias McEx.Util.MembershipManager
 
   # Client
 

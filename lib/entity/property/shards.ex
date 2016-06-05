@@ -3,7 +3,7 @@ defmodule McEx.Entity.Property.Shards do
   use McEx.Util
   require Logger
 
-  alias McEx.Math
+  alias McEx.Util.Math
   alias McEx.Entity.Message
 
   @moduledoc """

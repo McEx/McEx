@@ -1,4 +1,4 @@
-defmodule McEx.MembershipManager do
+defmodule McEx.Util.MembershipManager do
 
   defstruct groups_members: %{}, monitors: %{}
 

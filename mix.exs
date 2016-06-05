@@ -19,7 +19,7 @@ defmodule McEx.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :cutkey, :httpotion, :gproc],
+    [applications: [:logger, :cutkey, :gproc],
      mod: {McEx, []}]
   end
 
@@ -34,16 +34,16 @@ defmodule McEx.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:gpb, github: "tomas-abrahamsson/gpb"},
-     {:poison, "~> 2.0.0"},
+     {:poison, "~> 2.1.0"},
      {:cutkey, github: "imtal/cutkey"},
-     {:ibrowse, github: "cmullaparthi/ibrowse"},
-     {:httpotion, "~> 2.1.0"},
      {:gproc, github: "uwiger/gproc"}, #"~> 0.5.0"},
      {:uuid, "~> 1.1"},
-     {:credo, "~> 0.3", only: [:dev, :test]},
      {:mc_chunk, github: "McEx/McChunk"},
      {:mc_protocol, github: "McEx/McProtocol"},
      {:rustler, "~> 0.0.7"},
-     {:excoveralls, "~> 0.5", only: :test}]
+     # Dev
+     {:credo, "~> 0.3", only: [:dev, :test]},
+     {:excoveralls, "~> 0.5", only: :test},
+     {:dialyxir, "~> 0.3", only: [:dev]}]
   end
 end
