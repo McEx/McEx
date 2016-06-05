@@ -15,6 +15,9 @@ cache:
   - deps
   - _build
 
+env:
+  - MIX_ENV=test
+
 install:
   - curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh -s -- --yes
   - mix local.hex --force
@@ -22,7 +25,7 @@ install:
   - mix rustler.update_rust
 
 script:
-  - mix test
+  - mix coveralls.travis
 
 notifications:
   webhooks: http://travis.lunarco.de/mcex
