@@ -33,8 +33,7 @@ defmodule McEx.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:gpb, github: "tomas-abrahamsson/gpb"},
-     {:poison, "~> 2.1.0"},
+    [{:poison, "~> 2.1.0"},
      {:cutkey, github: "imtal/cutkey"},
      {:gproc, github: "uwiger/gproc"}, #"~> 0.5.0"},
      {:uuid, "~> 1.1"},
@@ -44,6 +43,7 @@ defmodule McEx.Mixfile do
      # Dev
      {:credo, "~> 0.3", only: [:dev, :test]},
      {:excoveralls, "~> 0.5", only: :test},
-     {:dialyxir, "~> 0.3", only: [:dev]}]
+     {:dialyxir, "~> 0.3", only: [:dev]},
+     {:inch_ex, ">= 0.0.0", only: :docs}]
   end
 end
